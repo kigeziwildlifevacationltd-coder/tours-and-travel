@@ -1097,8 +1097,15 @@ function write404Html(html) {
   fs.writeFileSync(path.join(distDir, '404.html'), html, 'utf8')
 }
 
-function writeNetlifyRedirects() {
-  const redirectLines = ['/home / 301']
+function getHttpsRedirectLine(siteUrl) {
+  const site = new URL(siteUrl)
+  const canonicalHttpsOrigin = new URL(`https://${site.host}`).origin
+
+  return `http://${site.host}/* ${canonicalHttpsOrigin}/:splat 301!`
+}
+
+function writeNetlifyRedirects(siteUrl) {
+  const redirectLines = [getHttpsRedirectLine(siteUrl), '/home / 301']
   fs.writeFileSync(path.join(distDir, '_redirects'), `${redirectLines.join('\n')}\n`, 'utf8')
 }
 
@@ -1124,7 +1131,7 @@ function run() {
   const notFoundHtml = buildHtmlDocument(notFoundPage, null, assetTags, data)
   write404Html(notFoundHtml)
 
-  writeNetlifyRedirects()
+  writeNetlifyRedirects(siteUrl)
 
   console.log(`[seo] Prerendered ${routePaths.length} crawlable routes with route-specific HTML.`)
 }
