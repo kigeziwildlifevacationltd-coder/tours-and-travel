@@ -4,13 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node ./node_modules/vite/bin/vite.js",
     "ratings:server": "node scripts/tour-rating-server.mjs",
     "seo:generate": "node scripts/generate-sitemap.mjs",
     "seo:prerender": "node scripts/prerender-routes.mjs",
-    "build": "npm run seo:generate && node ./node_modules/typescript/bin/tsc -b && vite build && npm run seo:prerender",
+    "build": "npm run seo:generate && node ./node_modules/typescript/bin/tsc -b && node ./node_modules/vite/bin/vite.js build && npm run seo:prerender",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "node ./node_modules/vite/bin/vite.js preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
