@@ -1,0 +1,1 @@
+import{j as n}from"./index-BkAio01S.js";function a({title:i,subtitle:e}){return n.jsxs("div",{className:"section-heading",children:[n.jsx("span",{className:"section-heading-line","aria-hidden":"true"}),n.jsx("h2",{children:i}),e?n.jsx("p",{children:e}):null]})}export{a as S};
