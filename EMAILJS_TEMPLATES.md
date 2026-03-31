@@ -1,6 +1,5 @@
 # EmailJS Template Designs
 
-
 Copy these into EmailJS so both emails are clean, branded, and easy to scan.
 
 ## Contact Us form template
