@@ -405,6 +405,8 @@ p {
 }
 
 .brand-mark {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -460,6 +462,8 @@ p {
 }
 
 .nav-links {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -489,6 +493,7 @@ p {
   height: 2px;
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, var(--amber), var(--orange-accent), transparent);
+  pointer-events: none;
   transform: scaleX(0);
   transform-origin: center;
   transition: transform 240ms var(--ease-out);
@@ -639,6 +644,7 @@ p {
 
 .hero-grid {
   position: relative;
+  z-index: 2;
   display: grid;
   gap: 1.35rem;
   grid-template-columns: 1.45fr minmax(250px, 0.9fr);
@@ -820,6 +826,19 @@ p {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.page-hero.with-background.tour-detail-hero h1 {
+  color: #d4af37;
+  -webkit-text-stroke: 0.6px rgba(255, 255, 255, 0.9);
+  text-shadow:
+    -0.6px -0.6px 0 rgba(255, 255, 255, 0.9),
+    0.6px -0.6px 0 rgba(255, 255, 255, 0.9),
+    -0.6px 0.6px 0 rgba(255, 255, 255, 0.9),
+    0.6px 0.6px 0 rgba(255, 255, 255, 0.9),
+    0 0 16px rgba(212, 175, 55, 0.55),
+    0 0 32px rgba(212, 175, 55, 0.42),
+    0 0 52px rgba(212, 175, 55, 0.28);
+}
+
 .hero-scroll-cue {
   position: absolute;
   left: 50%;
@@ -862,6 +881,7 @@ p {
   height: 0.54rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);
+  pointer-events: none;
   transform: translateX(-50%);
   animation: scroll-dot 1.4s ease-out infinite;
 }
@@ -887,6 +907,7 @@ p {
   width: 1.05rem;
   height: 1px;
   background: currentColor;
+  pointer-events: none;
 }
 
 .hero-description {
@@ -962,6 +983,7 @@ p {
   height: 0.45rem;
   border-radius: 999px;
   background: var(--forest);
+  pointer-events: none;
 }
 
 .section {
@@ -1250,6 +1272,7 @@ p {
   border-radius: 999px;
   flex: 0 0 0.5rem;
   background: var(--forest);
+  pointer-events: none;
 }
 
 .service-detail-actions {
@@ -1263,6 +1286,173 @@ p {
   gap: 0.48rem;
   color: var(--ink-soft);
   line-height: 1.55;
+}
+
+.tour-itinerary-accordion {
+  margin-top: 0.95rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.tour-itinerary-day {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface-alt) 82%, white);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.tour-itinerary-day[open] {
+  border-color: color-mix(in srgb, var(--forest) 28%, var(--line));
+  box-shadow: 0 18px 40px rgba(8, 31, 26, 0.08);
+}
+
+.tour-itinerary-summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 0.9rem;
+  padding: 1rem 1.05rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tour-itinerary-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tour-itinerary-day-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.65rem;
+  padding: 0.34rem 0.66rem;
+  border-radius: 999px;
+  background: var(--forest);
+  color: var(--white);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tour-itinerary-summary-copy {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.tour-itinerary-summary-title {
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.tour-itinerary-summary-tags {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.tour-itinerary-summary-icon {
+  margin-top: 0.45rem;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-right: 2px solid var(--forest);
+  border-bottom: 2px solid var(--forest);
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.tour-itinerary-day[open] .tour-itinerary-summary-icon {
+  transform: rotate(-135deg);
+}
+
+.tour-itinerary-body {
+  padding: 0 1.05rem 1.05rem;
+  display: grid;
+  gap: 0.78rem;
+}
+
+.tour-itinerary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.tour-itinerary-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.68rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, white 84%, var(--sand));
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.tour-itinerary-meta-item strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tour-itinerary-highlights {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tour-itinerary-highlights li {
+  padding: 0.35rem 0.62rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest) 10%, white);
+  color: var(--forest);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tour-itinerary-details {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+  color: var(--ink-soft);
+  line-height: 1.58;
+}
+
+.tour-snapshot-grid {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.tour-snapshot-card {
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-alt) 78%, white);
+}
+
+.tour-snapshot-label {
+  margin: 0;
+  color: var(--forest);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tour-snapshot-value {
+  margin: 0.45rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.58;
 }
 
 .service-detail-list {
@@ -1331,6 +1521,8 @@ p {
 }
 
 .gallery-media-button {
+  position: relative;
+  z-index: 1;
   width: 100%;
   border: 0;
   padding: 0;
@@ -1350,6 +1542,7 @@ p {
   content: '';
   inset: 0;
   background: linear-gradient(180deg, rgba(8, 14, 10, 0.02) 0%, rgba(8, 14, 10, 0.22) 100%);
+  pointer-events: none;
 }
 
 .gallery-media img {
@@ -1546,6 +1739,8 @@ p {
 }
 
 .service-card-link {
+  position: relative;
+  z-index: 1;
   width: 100%;
   display: block;
   border: 0;
@@ -1574,6 +1769,7 @@ p {
   inset: 0;
   background: rgba(15, 24, 11, 0.2);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 220ms var(--ease-out);
 }
 
@@ -2087,6 +2283,7 @@ p {
   font-size: 0.75rem;
   color: #fff;
   background: color-mix(in srgb, var(--forest) 75%, var(--orange-accent));
+  pointer-events: none;
 }
 
 .experiences-step-card h3 {
@@ -2940,8 +3137,37 @@ p {
     --topbar-height: 64px;
   }
 
+  .nav-shell {
+    justify-content: space-between;
+    padding-inline: 1rem;
+    background: linear-gradient(120deg, rgba(11, 24, 15, 0.98), rgba(26, 51, 30, 0.96));
+    backdrop-filter: none;
+  }
+
+  .page-hero.with-background .hero-background::after {
+    background: linear-gradient(
+      180deg,
+      rgba(12, 24, 14, 0.98) 0%,
+      rgba(12, 24, 14, 0.98) calc(var(--header-offset) + 0.8rem),
+      rgba(12, 24, 14, 0.68) calc(var(--header-offset) + 3.8rem),
+      rgba(12, 24, 14, 0.52) 48%,
+      rgba(12, 24, 14, 0.52) calc(100% - 9.5rem),
+      rgba(12, 24, 14, 0.86) calc(100% - 6.8rem),
+      rgba(12, 24, 14, 0.98) 100%
+    );
+  }
+
   .brand-name {
     display: none;
+  }
+
+  .brand-mark {
+    margin-right: auto;
+  }
+
+  .brand-logo {
+    height: 60px;
+    max-width: 320px;
   }
 
   .topbar-inner {
@@ -2968,6 +3194,10 @@ p {
 
   .menu-toggle {
     display: block;
+    position: static;
+    margin-left: auto;
+    z-index: 1;
+    transform: none;
   }
 
   .nav-links {
@@ -2979,8 +3209,9 @@ p {
     gap: 0.35rem;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 18px;
-    background: linear-gradient(140deg, rgba(11, 24, 15, 0.96), rgba(23, 43, 27, 0.92));
+    background: linear-gradient(140deg, rgba(11, 24, 15, 0.98), rgba(23, 43, 27, 0.98));
     box-shadow: 0 16px 30px rgba(8, 16, 10, 0.38);
+    backdrop-filter: none;
     padding: 0.65rem;
     transform-origin: top center;
     transform: scaleY(0.8);
@@ -3065,6 +3296,13 @@ p {
     text-align: left;
   }
 
+  .page-hero.hero-actions-bottom .hero-actions {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
   .custom-tour-head {
     flex-direction: column;
     align-items: flex-start;
@@ -3100,6 +3338,15 @@ p {
   :root {
     --topbar-height: 58px;
     --header-offset: calc(84px + var(--topbar-height));
+  }
+
+  .tour-itinerary-summary {
+    grid-template-columns: 1fr auto;
+  }
+
+  .tour-itinerary-day-badge {
+    grid-column: 1 / -1;
+    width: fit-content;
   }
 
   .whatsapp-widget {

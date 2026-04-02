@@ -6,7 +6,7 @@ import { TourRouteMap } from '../components/TourRouteMap'
 import { useTranslation } from '../context/useTranslation'
 import { heroBackgroundImages } from '../data/heroImages'
 import { tours } from '../data/siteContent'
-import { getTourDetail } from '../data/tourDetails'
+import { getTourDetail, type TourItineraryDay } from '../data/tourDetails'
 import { useRuntimeTranslatedList, useRuntimeTranslatedText } from '../hooks/useRuntimeTranslation'
 import {
   GORILLA_TREKKING_KEYWORDS,
@@ -16,6 +16,66 @@ import {
 } from '../seo/keywordClusters'
 import { usePageSeo } from '../seo/usePageSeo'
 
+type TourItineraryDayPanelProps = {
+  day: TourItineraryDay
+  defaultOpen?: boolean
+}
+
+function TourItineraryDayPanel({ day, defaultOpen = false }: TourItineraryDayPanelProps) {
+  const { t } = useTranslation()
+  const translatedDayLabel = useRuntimeTranslatedText(day.dayLabel)
+  const translatedHeadline = useRuntimeTranslatedText(day.headline)
+  const translatedDetails = useRuntimeTranslatedList(day.details)
+  const translatedHighlights = useRuntimeTranslatedList(day.highlights)
+  const translatedBaseLocation = useRuntimeTranslatedText(day.baseLocation)
+  const translatedOvernightLocation = useRuntimeTranslatedText(day.overnightLocation)
+
+  return (
+    <details className="tour-itinerary-day" open={defaultOpen}>
+      <summary className="tour-itinerary-summary">
+        <span className="tour-itinerary-day-badge">{translatedDayLabel}</span>
+        <span className="tour-itinerary-summary-copy">
+          <span className="tour-itinerary-summary-title">{translatedHeadline}</span>
+          {translatedHighlights.length ? (
+            <span className="tour-itinerary-summary-tags" aria-hidden="true">
+              {translatedHighlights.slice(0, 2).join(' / ')}
+            </span>
+          ) : null}
+        </span>
+        <span className="tour-itinerary-summary-icon" aria-hidden="true" />
+      </summary>
+      <div className="tour-itinerary-body">
+        <div className="tour-itinerary-meta">
+          {translatedBaseLocation ? (
+            <span className="tour-itinerary-meta-item">
+              <strong>{t('tourDetail.baseLabel')}</strong> {translatedBaseLocation}
+            </span>
+          ) : null}
+          {translatedOvernightLocation ? (
+            <span className="tour-itinerary-meta-item">
+              <strong>{t('tourDetail.overnightLabel')}</strong> {translatedOvernightLocation}
+            </span>
+          ) : null}
+        </div>
+
+        {translatedHighlights.length ? (
+          <ul className="tour-itinerary-highlights">
+            {translatedHighlights.map((item) => (
+              <li key={`${day.id}-${item}`}>{item}</li>
+            ))}
+          </ul>
+        ) : null}
+
+        <ul className="tour-itinerary-details">
+          {translatedDetails.map((item) => (
+            <li key={`${day.id}-${item}`}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
 export function TourDetailPage() {
   const { t } = useTranslation()
   const { tourId } = useParams<{ tourId: string }>()
@@ -23,11 +83,24 @@ export function TourDetailPage() {
   const detail = tour ? getTourDetail(tour) : null
   const translatedTourTitle = useRuntimeTranslatedText(tour?.title ?? '')
   const translatedDetailOverview = useRuntimeTranslatedText(detail?.overview ?? '')
-  const translatedHighlights = useRuntimeTranslatedList(detail?.highlights ?? [])
-  const translatedItineraryOutline = useRuntimeTranslatedList(detail?.itineraryOutline ?? [])
   const translatedIncludes = useRuntimeTranslatedList(detail?.includes ?? [])
+  const translatedQuotation = useRuntimeTranslatedList(detail?.quotation ?? [])
+  const translatedExcludes = useRuntimeTranslatedList(detail?.excludes ?? [])
   const translatedPackages = useRuntimeTranslatedList(detail?.packages ?? [])
+  const translatedPlanningNotes = useRuntimeTranslatedList(detail?.planningNotes ?? [])
   const translatedBestFor = useRuntimeTranslatedText(detail?.bestFor ?? '')
+  const translatedSnapshotValues = useRuntimeTranslatedList(
+    detail
+      ? [
+          detail.snapshot.startEnd,
+          detail.snapshot.routeStyle,
+          detail.snapshot.pace,
+          detail.snapshot.mainFocus,
+          detail.snapshot.mainRoute,
+          detail.snapshot.permitPlanning,
+        ]
+      : [],
+  )
   const mapLocation = detail?.mapLocation ?? ''
   const tourEntityKeywords = buildEntityKeywordCluster(
     'tour',
@@ -87,6 +160,32 @@ export function TourDetailPage() {
 
   const prefillCustomTourRequestUrl = `/tours?prefillTourId=${encodeURIComponent(tour.id)}#custom-tour-request`
   const shareExperienceUrl = `/experiences?tour=${encodeURIComponent(tour.id)}#share-experience`
+  const snapshotItems = [
+    {
+      label: t('tourDetail.snapshotStartEnd'),
+      value: translatedSnapshotValues[0] ?? detail.snapshot.startEnd,
+    },
+    {
+      label: t('tourDetail.snapshotRouteStyle'),
+      value: translatedSnapshotValues[1] ?? detail.snapshot.routeStyle,
+    },
+    {
+      label: t('tourDetail.snapshotPace'),
+      value: translatedSnapshotValues[2] ?? detail.snapshot.pace,
+    },
+    {
+      label: t('tourDetail.snapshotMainFocus'),
+      value: translatedSnapshotValues[3] ?? detail.snapshot.mainFocus,
+    },
+    {
+      label: t('tourDetail.snapshotMainRoute'),
+      value: translatedSnapshotValues[4] ?? detail.snapshot.mainRoute,
+    },
+    {
+      label: t('tourDetail.snapshotPermitPlanning'),
+      value: translatedSnapshotValues[5] ?? detail.snapshot.permitPlanning,
+    },
+  ]
   const routeStops = detail.routeStops.length ? detail.routeStops : [detail.mapLocation]
   const normalizedRouteStops = routeStops
     .map((stop) => stop.trim())
@@ -128,24 +227,9 @@ export function TourDetailPage() {
   return (
     <>
       <PageHero
-        eyebrow={t('tourDetail.heroEyebrow')}
-        title={translatedTourTitle}
-        description={translatedDetailOverview}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('tourDetail.heroActionRequest'), to: prefillCustomTourRequestUrl },
-          { label: t('tourDetail.heroActionAllTours'), to: '/tours', variant: 'secondary' },
-        ]}
-        highlights={translatedHighlights}
+        title={tour.title}
+        className="hero-actions-centered tour-detail-hero"
         backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('tourDetail.heroPanelTitle'),
-          points: [
-            t('tourDetail.heroPanelPoint1'),
-            t('tourDetail.heroPanelPoint2'),
-            t('tourDetail.heroPanelPoint3'),
-          ],
-        }}
       />
 
       <section className="section">
@@ -154,22 +238,64 @@ export function TourDetailPage() {
             <article className="service-detail-panel">
               <p className="service-detail-label">{t('tourDetail.dayFlowLabel')}</p>
               <h3>{translatedTourTitle}</h3>
-              <p className="service-detail-description">{t('tourDetail.sampleBreakdown')}</p>
-              <ol className="service-detail-workflow">
-                {translatedItineraryOutline.map((step) => (
-                  <li key={step}>{step}</li>
+              <p className="service-detail-description">{t('tourDetail.dayDropdownHint')}</p>
+              <div className="tour-itinerary-accordion">
+                {detail.itineraryDays.map((day, index) => (
+                  <TourItineraryDayPanel key={day.id} day={day} defaultOpen={index === 0} />
                 ))}
-              </ol>
+              </div>
             </article>
 
             <aside className="service-detail-panel">
               <p className="service-detail-label">{t('tourDetail.summaryLabel')}</p>
-              <h3>{t('tourDetail.whatIncluded')}</h3>
+              <h3>{t('tourDetail.snapshotTitle')}</h3>
+              <div className="tour-snapshot-grid">
+                {snapshotItems.map((item) => (
+                  <div key={item.label} className="tour-snapshot-card">
+                    <p className="tour-snapshot-label">{item.label}</p>
+                    <p className="tour-snapshot-value">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {translatedPlanningNotes.length ? (
+                <>
+                  <h4 className="service-detail-subtitle">{t('tourDetail.notesTitle')}</h4>
+                  <ul className="service-detail-list">
+                    {translatedPlanningNotes.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+
+              {translatedQuotation.length ? (
+                <>
+                  <h4 className="service-detail-subtitle">{t('tourDetail.quotationLabel')}</h4>
+                  <ul className="service-detail-list">
+                    {translatedQuotation.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+
+              <h4 className="service-detail-subtitle">{t('tourDetail.whatIncluded')}</h4>
               <ul className="service-detail-highlights">
                 {translatedIncludes.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
+              {translatedExcludes.length ? (
+                <>
+                  <h4 className="service-detail-subtitle">{t('tourDetail.excludesLabel')}</h4>
+                  <ul className="service-detail-list">
+                    {translatedExcludes.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
               {translatedPackages.length ? (
                 <>
                   <h4 className="service-detail-subtitle">{t('tourDetail.packagesLabel')}</h4>
@@ -192,7 +318,7 @@ export function TourDetailPage() {
             </aside>
           </div>
 
-            <article className="service-detail-panel tour-map-panel">
+          <article className="service-detail-panel tour-map-panel">
             <p className="service-detail-label">{t('tourDetail.locationLabel')}</p>
             <h3>{t('tourDetail.locationHeading')}</h3>
             <div className="tour-map-meta">

@@ -52,7 +52,7 @@ export const navItems = [
   { label: 'Contact Us', to: '/contact-us' },
 ]
 
-export const tours: Tour[] = [
+const tourCatalog = [
   {
     id: '10-days-best-uganda',
     title: '10 Days Best Of Uganda Safari',
@@ -129,6 +129,79 @@ export const tours: Tour[] = [
     image: freeImages.gorillaTours,
   },
   {
+    id: '4-days-bwindi-gorilla-fly-in',
+    title: '3 Nights / 4 Days Gorilla Safari Package - Bwindi National Park',
+    duration: '4 Days',
+    country: 'Uganda',
+    summary:
+      'A fly-in Bwindi gorilla safari with Rushaga lodge stay, gorilla trekking, and a full Batwa cultural experience.',
+    image: freeImages.gorillaTrekking,
+  },
+  {
+    id: '4-days-bwindi-lake-mutanda',
+    title: 'Uganda Safari Holiday - 3 Nights / 4 Days Safari Package',
+    duration: '4 Days',
+    country: 'Uganda / Rwanda',
+    summary:
+      'A cross-border safari from Kigali to Bwindi with gorilla trekking, Lake Mutanda, and the Mgahinga Batwa forest trail.',
+    image: freeImages.ugandaLandscape,
+  },
+  {
+    id: '4-days-entebbe-fly-in-gorilla',
+    title: 'Uganda Safari Holiday - 3 Nights / 4 Days Entebbe Fly-In Package',
+    duration: '4 Days',
+    country: 'Uganda',
+    summary:
+      'An Entebbe arrival package with an overnight near the airport, domestic flight to Kisoro, and gorilla trekking in Bwindi.',
+    image: freeImages.gorillaTrekking,
+  },
+  {
+    id: '4-days-bwindi-road-gorilla',
+    title: 'Uganda Safari Holiday - 3 Nights / 4 Days Bwindi Road Gorilla Package',
+    duration: '4 Days',
+    country: 'Uganda',
+    summary:
+      'A road-based Entebbe to Bwindi safari with gorilla trekking, a second gorilla day for part of the group, and Rushaga lodge stay.',
+    image: freeImages.gorillaTours,
+  },
+  {
+    id: '8-days-rwanda-uganda-adventure',
+    title: 'Uganda & Rwanda Safari Adventure Holiday - 7 Nights / 8 Days',
+    duration: '8 Days',
+    country: 'Uganda / Rwanda',
+    summary:
+      'A two-country safari linking Kigali, Volcanoes National Park, Bwindi, and Lake Mburo with gorilla trekking in both Rwanda and Uganda.',
+    image: freeImages.ugandaBestTwo,
+  },
+  {
+    id: '9-days-top-adventure-uganda',
+    title: 'Top Adventure Safari In Uganda - 8 Nights / 9 Days',
+    duration: '9 Days',
+    country: 'Uganda',
+    summary:
+      'A broader Uganda adventure combining Lake Bunyonyi, gorilla trekking, volcano hiking, Ishasha tree-climbing lions, Queen Elizabeth, and Kibale chimpanzees.',
+    image: freeImages.ugandaLandscape,
+  },
+  {
+    id: '6-days-murchison-queen-bwindi',
+    title: 'Uganda Safari Holiday - 5 Nights / 6 Days Safari Package',
+    duration: '6 Days',
+    country: 'Uganda',
+    summary:
+      'A 5-night Uganda road safari combining Murchison Falls, Queen Elizabeth, Ishasha tree-climbing lions, and gorilla trekking in Bwindi.',
+    image: freeImages.ugandaBestOne,
+  },
+  {
+    id: '3-days-queen-ishasha-bunyonyi',
+    title:
+      '2 Nights / 3 Days Uganda Safari Package - Queen Elizabeth, Ishasha And Lake Bunyonyi',
+    duration: '3 Days',
+    country: 'Uganda',
+    summary:
+      'A short road safari featuring Queen Elizabeth game viewing, Ishasha tree-climbing lions, and a scenic Lake Bunyonyi boat cruise.',
+    image: freeImages.wildlifeViewing,
+  },
+  {
     id: '8-days-chimps-wildlife',
     title: '8 Days Chimps And Wildlife Safari',
     duration: '8 Days',
@@ -163,7 +236,20 @@ export const tours: Tour[] = [
     summary: 'A focused chimpanzee immersion paired with forest-guided walking activities.',
     image: freeImages.nyungweForest,
   },
+  {
+    id: '5-days-ishasha-bwindi-gorilla',
+    title: '4 Nights / 5 Days Ishasha Tree Climbing Lions And Bwindi Gorilla Safari Package',
+    duration: '5 Days',
+    country: 'Uganda',
+    summary:
+      'A 4-night Uganda safari linking Bwindi gorilla trekking with Ishasha tree-climbing lions and a road return to Kampala or Entebbe.',
+    image: freeImages.wildlifeViewing,
+  },
 ]
+
+// Keep newly added tours at the end of the source list so they automatically
+// appear first anywhere the shared `tours` collection is rendered.
+export const tours: Tour[] = [...tourCatalog].reverse()
 
 export const destinations: Destination[] = [
   {

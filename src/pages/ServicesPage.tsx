@@ -62,28 +62,12 @@ export function ServicesPage() {
   return (
     <>
       <PageHero
-        eyebrow={t('services.heroEyebrow')}
-        title={t('services.heroTitle')}
-        description={t('services.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('services.heroActionRequest'), to: requestTourUrl },
           { label: t('services.heroActionSeeTours'), to: '/tours', variant: 'secondary' },
         ]}
-        highlights={[
-          t('services.heroHighlight1'),
-          t('services.heroHighlight2'),
-          t('services.heroHighlight3'),
-        ]}
         backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('services.heroPanelTitle'),
-          points: [
-            t('services.heroPanelPoint1'),
-            t('services.heroPanelPoint2'),
-            t('services.heroPanelPoint3'),
-          ],
-        }}
       />
 
       <section className="section">

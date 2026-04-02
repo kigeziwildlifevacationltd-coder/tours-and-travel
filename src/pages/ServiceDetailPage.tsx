@@ -21,7 +21,6 @@ export function ServiceDetailPage() {
   const detail = service ? getServiceDetail(service) : null
   const translatedServiceName = useRuntimeTranslatedText(service?.name ?? '')
   const translatedDetailDescription = useRuntimeTranslatedText(detail?.fullDescription ?? '')
-  const translatedHighlights = useRuntimeTranslatedList(detail?.highlights ?? [])
   const translatedTypicalTimeline = useRuntimeTranslatedText(detail?.typicalTimeline ?? '')
   const translatedDeliverables = useRuntimeTranslatedList(detail?.deliverables ?? [])
   const translatedServiceNotes = useRuntimeTranslatedList(detail?.serviceNotes ?? [])
@@ -86,24 +85,12 @@ export function ServiceDetailPage() {
   return (
     <>
       <PageHero
-        eyebrow={t('serviceDetail.heroEyebrow')}
-        title={translatedServiceName}
-        description={translatedDetailDescription}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('serviceDetail.heroActionRequest'), to: requestTourUrl },
           { label: t('serviceDetail.heroActionAllServices'), to: '/services', variant: 'secondary' },
         ]}
-        highlights={translatedHighlights}
         backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('serviceDetail.heroPanelTitle'),
-          points: [
-            t('serviceDetail.heroPanelPoint1'),
-            t('serviceDetail.heroPanelPoint2'),
-            t('serviceDetail.heroPanelPoint3'),
-          ],
-        }}
       />
 
       <section className="section">

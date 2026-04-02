@@ -448,28 +448,12 @@ export function ToursPage() {
   return (
     <>
       <PageHero
-        eyebrow={t('tours.heroEyebrow')}
-        title={t('tours.heroTitle')}
-        description={t('tours.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('tours.heroActionStartPlanning'), to: `/tours#${CUSTOM_TOUR_FORM_ANCHOR}` },
           { label: t('tours.heroActionViewServices'), to: '/services', variant: 'secondary' },
         ]}
-        highlights={[
-          t('tours.heroHighlight1'),
-          t('tours.heroHighlight2'),
-          t('tours.heroHighlight3'),
-        ]}
         backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('tours.heroPanelTitle'),
-          points: [
-            t('tours.heroPanelPoint1'),
-            t('tours.heroPanelPoint2'),
-            t('tours.heroPanelPoint3'),
-          ],
-        }}
       />
 
       <section className="section">

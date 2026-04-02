@@ -69,7 +69,6 @@ const homeSeoFaqSchema = {
 export function HomePage() {
   const { t } = useTranslation()
   const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
-  const featuredTours = tours.filter((tour) => tour.featured).slice(0, 3)
 
   usePageSeo({
     title: t('home.heroTitle'),
@@ -121,18 +120,13 @@ export function HomePage() {
       <section id="featured-tours" className="section">
         <div className="container">
           <SectionHeading
-            title={t('home.featuredToursTitle')}
-            subtitle={t('home.featuredToursSubtitle')}
+            title={`${tours.length} ${t('tours.availableToursSuffix')}`}
+            subtitle={t('tours.availableToursSubtitle')}
           />
           <div className="card-grid tours-grid">
-            {featuredTours.map((tour) => (
+            {tours.map((tour) => (
               <TourCard key={tour.id} tour={tour} />
             ))}
-          </div>
-          <div className="section-actions">
-            <Link to="/tours" className="btn btn-primary">
-              {t('home.viewAllTours')}
-            </Link>
           </div>
         </div>
       </section>

@@ -19,28 +19,12 @@ export function NotFoundPage() {
   return (
     <>
       <PageHero
-        eyebrow={t('notFound.heroEyebrow')}
-        title={t('notFound.heroTitle')}
-        description={t('notFound.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('notFound.heroActionHome'), to: '/' },
           { label: t('notFound.heroActionTours'), to: '/tours', variant: 'secondary' },
         ]}
-        highlights={[
-          t('notFound.heroHighlight1'),
-          t('notFound.heroHighlight2'),
-          t('notFound.heroHighlight3'),
-        ]}
         backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('notFound.heroPanelTitle'),
-          points: [
-            t('notFound.heroPanelPoint1'),
-            t('notFound.heroPanelPoint2'),
-            t('notFound.heroPanelPoint3'),
-          ],
-        }}
       />
 
       <section className="section not-found">
