@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import vm from 'node:vm'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -74,32 +75,25 @@ function getSiteUrl() {
   return normalizedUrl.origin.replace(/\/+$/, '')
 }
 
-function extractArrayBlock(content, startMarker, endMarker) {
-  const startIndex = content.indexOf(startMarker)
+function loadSiteContentData() {
+  const source = fs.readFileSync(siteContentPath, 'utf8')
+  const sanitizedSource = source
+    .replace(/^import .*$/gm, '')
+    .replace(/export const (\w+): [^=]+ =/g, 'const $1 =')
+    .replace(/export const (\w+) =/g, 'const $1 =')
 
-  if (startIndex < 0) {
-    return ''
+  const context = {
+    partnerLogo: '/logo.png',
   }
 
-  const endIndex = content.indexOf(endMarker, startIndex)
+  vm.createContext(context)
+  vm.runInContext(
+    `${sanitizedSource}
+globalThis.__SEO_ROUTE_DATA__ = { tours, services };`,
+    context,
+  )
 
-  if (endIndex < 0) {
-    return content.slice(startIndex)
-  }
-
-  return content.slice(startIndex, endIndex)
-}
-
-function extractIdsFromBlock(block) {
-  const idRegex = /id:\s*'([^']+)'/g
-  const ids = []
-  let match
-
-  while ((match = idRegex.exec(block)) !== null) {
-    ids.push(match[1])
-  }
-
-  return ids
+  return context.__SEO_ROUTE_DATA__
 }
 
 function getRoutePriority(routePath) {
@@ -269,20 +263,13 @@ function generateRobotsTxt(siteUrl) {
 
 function run() {
   const siteUrl = getSiteUrl()
-  const siteContent = fs.readFileSync(siteContentPath, 'utf8')
-  const toursBlock = extractArrayBlock(
-    siteContent,
-    'export const tours: Tour[] = [',
-    'export const destinations: Destination[] = [',
-  )
-  const servicesBlock = extractArrayBlock(
-    siteContent,
-    'export const services: Service[] = [',
-    'export const stats = [',
-  )
-
-  const tourIds = extractIdsFromBlock(toursBlock)
-  const serviceIds = extractIdsFromBlock(servicesBlock)
+  const siteContentData = loadSiteContentData()
+  const tourIds = (Array.isArray(siteContentData?.tours) ? siteContentData.tours : [])
+    .map((tour) => (typeof tour?.id === 'string' ? tour.id.trim() : ''))
+    .filter(Boolean)
+  const serviceIds = (Array.isArray(siteContentData?.services) ? siteContentData.services : [])
+    .map((service) => (typeof service?.id === 'string' ? service.id.trim() : ''))
+    .filter(Boolean)
   const staticRoutes = [
     '/',
     '/tours',

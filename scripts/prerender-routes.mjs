@@ -1097,15 +1097,22 @@ function write404Html(html) {
   fs.writeFileSync(path.join(distDir, '404.html'), html, 'utf8')
 }
 
-function getHttpsRedirectLine(siteUrl) {
+function getCanonicalRedirectLines(siteUrl) {
   const site = new URL(siteUrl)
   const canonicalHttpsOrigin = new URL(`https://${site.host}`).origin
+  const alternateHost = site.host.startsWith('www.') ? site.host.slice(4) : `www.${site.host}`
+  const redirectLines = [`http://${site.host}/* ${canonicalHttpsOrigin}/:splat 301!`]
 
-  return `http://${site.host}/* ${canonicalHttpsOrigin}/:splat 301!`
+  if (alternateHost !== site.host) {
+    redirectLines.push(`http://${alternateHost}/* ${canonicalHttpsOrigin}/:splat 301!`)
+    redirectLines.push(`https://${alternateHost}/* ${canonicalHttpsOrigin}/:splat 301!`)
+  }
+
+  return [...new Set(redirectLines)]
 }
 
 function writeNetlifyRedirects(siteUrl) {
-  const redirectLines = [getHttpsRedirectLine(siteUrl), '/home / 301']
+  const redirectLines = [...getCanonicalRedirectLines(siteUrl), '/home / 301']
   fs.writeFileSync(path.join(distDir, '_redirects'), `${redirectLines.join('\n')}\n`, 'utf8')
 }
 
