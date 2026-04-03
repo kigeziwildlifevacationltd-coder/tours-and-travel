@@ -3,6 +3,7 @@ import { PageHero } from '../components/PageHero'
 import { TourRating } from '../components/TourRating'
 import { ExperienceCallout } from '../components/ExperienceCallout'
 import { TourRouteMap } from '../components/TourRouteMap'
+import { TourBrochure } from '../components/TourBrochure'
 import { useTranslation } from '../context/useTranslation'
 import { heroBackgroundImages } from '../data/heroImages'
 import { tours } from '../data/siteContent'
@@ -317,6 +318,8 @@ export function TourDetailPage() {
               </div>
             </aside>
           </div>
+
+          <TourBrochure tour={tour} detail={detail} />
 
           <article className="service-detail-panel tour-map-panel">
             <p className="service-detail-label">{t('tourDetail.locationLabel')}</p>
