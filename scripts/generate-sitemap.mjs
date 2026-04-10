@@ -9,6 +9,9 @@ const projectRoot = path.resolve(__dirname, '..')
 const publicDir = path.join(projectRoot, 'public')
 const publicImagesDir = path.join(publicDir, 'images')
 const siteContentPath = path.join(projectRoot, 'src', 'data', 'siteContent.ts')
+const ROOT_SITEMAP_FILE = 'sitemap.xml'
+const PAGE_SITEMAP_FILE = 'sitemap-pages.xml'
+const IMAGE_SITEMAP_FILE = 'sitemap-images.xml'
 
 function parseDotEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -129,7 +132,7 @@ function getRouteChangeFrequency(routePath) {
   return 'monthly'
 }
 
-function generateSitemapXml(siteUrl, routes) {
+function generatePageSitemapXml(siteUrl, routes) {
   const lastModified = new Date().toISOString()
   const urlEntries = routes
     .map((routePath) => {
@@ -139,7 +142,7 @@ function generateSitemapXml(siteUrl, routes) {
 
       return [
         '  <url>',
-        `    <loc>${routeUrl}</loc>`,
+        `    <loc>${escapeXml(routeUrl)}</loc>`,
         `    <lastmod>${lastModified}</lastmod>`,
         `    <changefreq>${changeFrequency}</changefreq>`,
         `    <priority>${priority}</priority>`,
@@ -153,6 +156,24 @@ function generateSitemapXml(siteUrl, routes) {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     urlEntries,
     '</urlset>',
+    '',
+  ].join('\n')
+}
+
+function generateSitemapIndexXml(siteUrl, sitemapFiles) {
+  const sitemapEntries = sitemapFiles
+    .map((fileName) => {
+      const sitemapUrl = `${siteUrl}/${fileName}`
+
+      return ['  <sitemap>', `    <loc>${escapeXml(sitemapUrl)}</loc>`, '  </sitemap>'].join('\n')
+    })
+    .join('\n')
+
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    sitemapEntries,
+    '</sitemapindex>',
     '',
   ].join('\n')
 }
@@ -262,8 +283,7 @@ function generateRobotsTxt(siteUrl) {
     'User-agent: *',
     'Allow: /',
     '',
-    `Sitemap: ${siteUrl}/sitemap.xml`,
-    `Sitemap: ${siteUrl}/sitemap-images.xml`,
+    `Sitemap: ${siteUrl}/${ROOT_SITEMAP_FILE}`,
     '',
   ].join('\n')
 }
@@ -293,7 +313,7 @@ function run() {
   const tourRoutes = tourIds.map((tourId) => `/tours/${tourId}`)
   const serviceRoutes = serviceIds.map((serviceId) => `/services/${serviceId}`)
   const allRoutes = [...new Set([...staticRoutes, ...tourRoutes, ...serviceRoutes])]
-  const sitemapXml = generateSitemapXml(siteUrl, allRoutes)
+  const pageSitemapXml = generatePageSitemapXml(siteUrl, allRoutes)
   const imagePaths = collectImagePaths(publicImagesDir, 'images')
   const staticRouteImages = [
     { pagePath: '/', imagePath: '/images/mountain-road-panorama-0046.jpg' },
@@ -328,16 +348,18 @@ function run() {
       imagePath,
     })),
   ]
+  const sitemapIndexXml = generateSitemapIndexXml(siteUrl, [PAGE_SITEMAP_FILE, IMAGE_SITEMAP_FILE])
   const imageSitemapXml = generateImageSitemapXml(siteUrl, imageEntries)
   const robotsTxt = generateRobotsTxt(siteUrl)
 
   fs.mkdirSync(publicDir, { recursive: true })
-  fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemapXml, 'utf8')
-  fs.writeFileSync(path.join(publicDir, 'sitemap-images.xml'), imageSitemapXml, 'utf8')
+  fs.writeFileSync(path.join(publicDir, ROOT_SITEMAP_FILE), sitemapIndexXml, 'utf8')
+  fs.writeFileSync(path.join(publicDir, PAGE_SITEMAP_FILE), pageSitemapXml, 'utf8')
+  fs.writeFileSync(path.join(publicDir, IMAGE_SITEMAP_FILE), imageSitemapXml, 'utf8')
   fs.writeFileSync(path.join(publicDir, 'robots.txt'), robotsTxt, 'utf8')
 
   console.log(
-    `[seo] Generated sitemap.xml (${allRoutes.length} URLs), sitemap-images.xml (${imageEntries.length} images), and robots.txt for ${siteUrl}`,
+    `[seo] Generated sitemap.xml index, ${PAGE_SITEMAP_FILE} (${allRoutes.length} URLs), ${IMAGE_SITEMAP_FILE} (${imageEntries.length} images), and robots.txt for ${siteUrl}`,
   )
 }
 

@@ -363,16 +363,34 @@ globalThis.__SEO_ROUTE_DATA__ = { navItems, tours, destinations, services, stats
 }
 
 function readSitemapRoutes(siteUrl) {
-  const sitemapPath = path.join(distDir, 'sitemap.xml')
-  const sitemapXml = fs.readFileSync(sitemapPath, 'utf8')
-  const routePaths = [...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)]
-    .map((match) => {
-      const url = new URL(match[1].trim(), `${siteUrl}/`)
-      return normalizeRoutePath(url.pathname)
-    })
-    .filter(Boolean)
+  const sitemapCandidates = ['sitemap-pages.xml', 'sitemap.xml']
 
-  return [...new Set(routePaths)]
+  for (const fileName of sitemapCandidates) {
+    const sitemapPath = path.join(distDir, fileName)
+
+    if (!fs.existsSync(sitemapPath)) {
+      continue
+    }
+
+    const sitemapXml = fs.readFileSync(sitemapPath, 'utf8')
+
+    if (!/<urlset\b/i.test(sitemapXml)) {
+      continue
+    }
+
+    const routePaths = [...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((match) => {
+        const url = new URL(match[1].trim(), `${siteUrl}/`)
+        return normalizeRoutePath(url.pathname)
+      })
+      .filter(Boolean)
+
+    if (routePaths.length > 0) {
+      return [...new Set(routePaths)]
+    }
+  }
+
+  throw new Error('[seo] No page sitemap was found in dist. Run sitemap generation before prerendering routes.')
 }
 
 function extractAssetTags(templateHtml) {
@@ -1136,7 +1154,7 @@ function getCanonicalRedirectLines(siteUrl) {
 }
 
 function writeNetlifyRedirects(siteUrl) {
-  const redirectLines = [...getCanonicalRedirectLines(siteUrl), '/home / 301']
+  const redirectLines = [...getCanonicalRedirectLines(siteUrl), '/legacy-source.html / 301', '/home / 301']
   fs.writeFileSync(path.join(distDir, '_redirects'), `${redirectLines.join('\n')}\n`, 'utf8')
 }
 

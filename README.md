@@ -52,12 +52,12 @@ VITE_TOUR_RATING_API_KEY=replace_with_shared_secret
 
 - Set `VITE_SITE_URL` to your live production domain in `.env`.
 - The build now auto-generates:
-  - `public/sitemap.xml` (all core pages + all `/tours/:id` and `/services/:id`)
+  - `public/sitemap.xml` (sitemap index)
+  - `public/sitemap-pages.xml` (all core pages + all `/tours/:id` and `/services/:id`)
   - `public/sitemap-images.xml` (image discovery for gallery/media assets)
-  - `public/robots.txt` (with both sitemap entries)
-- After deploy, submit both:
+  - `public/robots.txt` (with the sitemap index entry)
+- After deploy, submit:
   - `https://<your-domain>/sitemap.xml`
-  - `https://<your-domain>/sitemap-images.xml`
   in Google Search Console and request indexing for key pages.
 
 Optional legacy fallback:
