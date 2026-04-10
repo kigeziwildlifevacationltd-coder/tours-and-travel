@@ -36,16 +36,19 @@ export function SiteMapPage() {
             '@type': 'ListItem',
             position: index + 1,
             name: item.label,
-            url: typeof window !== 'undefined' ? `${window.location.origin}${item.to}` : item.to,
+            url: item.to,
           })),
           ...tours.map((tour, index) => ({
             '@type': 'ListItem',
             position: pageLinks.length + index + 1,
             name: tour.title,
-            url:
-              typeof window !== 'undefined'
-                ? `${window.location.origin}/tours/${tour.id}`
-                : `/tours/${tour.id}`,
+            url: `/tours/${tour.id}`,
+          })),
+          ...services.map((service, index) => ({
+            '@type': 'ListItem',
+            position: pageLinks.length + tours.length + index + 1,
+            name: service.name,
+            url: `/services/${service.id}`,
           })),
         ],
       },

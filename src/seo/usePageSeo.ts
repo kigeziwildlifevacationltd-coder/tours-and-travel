@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { useTranslation } from '../context/useTranslation'
 import {
   DEFAULT_SEO_DESCRIPTION,
   DEFAULT_SEO_IMAGE,
@@ -239,6 +240,25 @@ function normalizeStructuredDataValue(value: unknown, key?: string): unknown {
   return value
 }
 
+function getLocaleForLanguage(language: string | null | undefined): string {
+  switch (language) {
+    case 'fr':
+      return 'fr_FR'
+    case 'de':
+      return 'de_DE'
+    case 'es':
+      return 'es_ES'
+    case 'it':
+      return 'it_IT'
+    case 'ru':
+      return 'ru_RU'
+    case 'pt':
+      return 'pt_PT'
+    default:
+      return SITE_LOCALE
+  }
+}
+
 export function usePageSeo({
   title,
   description = DEFAULT_SEO_DESCRIPTION,
@@ -252,13 +272,15 @@ export function usePageSeo({
   noIndex = false,
   preloadImage,
   structuredData,
-  locale = SITE_LOCALE,
+  locale,
   author = SITE_AUTHOR,
   twitterCard = 'summary_large_image',
   publishedTime,
   modifiedTime,
 }: PageSeoOptions) {
+  const { language } = useTranslation()
   const normalizedTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`
+  const resolvedLocale = locale ?? getLocaleForLanguage(language)
   const normalizedPath = path
     ? normalizeRoutePath(path)
     : normalizeRoutePath(typeof window !== 'undefined' ? window.location.pathname : '/')
@@ -287,10 +309,10 @@ export function usePageSeo({
         title: normalizedTitle,
         description,
         path: normalizedPath,
-        locale,
+        locale: resolvedLocale,
         breadcrumbId,
       }),
-    [breadcrumbId, description, locale, normalizedPath, normalizedTitle],
+    [breadcrumbId, description, normalizedPath, normalizedTitle, resolvedLocale],
   )
   const twitterDomain = useMemo(() => {
     try {
@@ -353,7 +375,7 @@ export function usePageSeo({
     setPropertyMeta('og:image:height', imageHeightContent)
     setPropertyMeta('og:image:alt', normalizedImageAlt)
     setPropertyMeta('og:site_name', SITE_NAME)
-    setPropertyMeta('og:locale', locale)
+    setPropertyMeta('og:locale', resolvedLocale)
 
     setNamedMeta('twitter:card', twitterCard)
     setNamedMeta('twitter:title', normalizedTitle)
@@ -386,13 +408,13 @@ export function usePageSeo({
     imageAlt,
     imageMimeType,
     imageWidthContent,
-    locale,
     mergedKeywords,
     modifiedTime,
     noIndex,
     normalizedStructuredData,
     normalizedTitle,
     publishedTime,
+    resolvedLocale,
     twitterDomain,
     twitterCard,
     type,

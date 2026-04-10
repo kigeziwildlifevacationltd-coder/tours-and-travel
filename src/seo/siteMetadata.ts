@@ -35,6 +35,10 @@ export const BUSINESS_SOCIAL_LINKS = configuredBusinessSocialLinks
   .map((value) => value.trim())
   .filter((value) => /^https?:\/\//i.test(value))
 
+function isLocalDevelopmentOrigin(origin: string): boolean {
+  return /:\/\/(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|\[::1\])(?::\d+)?$/i.test(origin)
+}
+
 type StructuredData = Record<string, unknown>
 type BreadcrumbItem = {
   name: string
@@ -51,7 +55,11 @@ type WebPageStructuredDataOptions = {
 
 export function getSiteOrigin(): string {
   if (typeof window !== 'undefined' && window.location.origin.trim().length > 0) {
-    return window.location.origin
+    const currentOrigin = window.location.origin.trim()
+
+    if (isLocalDevelopmentOrigin(currentOrigin)) {
+      return currentOrigin
+    }
   }
 
   return FALLBACK_SITE_ORIGIN

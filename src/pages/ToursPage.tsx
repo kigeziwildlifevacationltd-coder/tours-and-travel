@@ -147,10 +147,7 @@ export function ToursPage() {
             '@type': 'ListItem',
             position: index + 1,
             name: tour.title,
-            url:
-              typeof window !== 'undefined'
-                ? `${window.location.origin}/tours/${tour.id}`
-                : `/tours/${tour.id}`,
+            url: `/tours/${tour.id}`,
           })),
         },
       },

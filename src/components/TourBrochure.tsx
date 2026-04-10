@@ -145,8 +145,43 @@ function trimText(value: string, maxLength: number) {
   return `${safeValue.trimEnd()}...`
 }
 
+function splitLongToken(value: string, maxChars: number) {
+  if (value.length <= maxChars || maxChars < 2) {
+    return [value]
+  }
+
+  const pieces: string[] = []
+  let remainingValue = value
+
+  while (remainingValue.length > maxChars) {
+    const chunk = remainingValue.slice(0, maxChars)
+    const preferredBreak = Math.max(
+      chunk.lastIndexOf('/'),
+      chunk.lastIndexOf('-'),
+      chunk.lastIndexOf('@'),
+      chunk.lastIndexOf('.'),
+      chunk.lastIndexOf('_'),
+    )
+    const splitIndex = preferredBreak >= Math.floor(maxChars * 0.45) ? preferredBreak + 1 : maxChars
+
+    pieces.push(remainingValue.slice(0, splitIndex))
+    remainingValue = remainingValue.slice(splitIndex)
+  }
+
+  if (remainingValue) {
+    pieces.push(remainingValue)
+  }
+
+  return pieces
+}
+
 function wrapText(value: string, maxChars: number) {
-  const words = value.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean)
+  const words = value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .flatMap((word) => splitLongToken(word, maxChars))
 
   if (!words.length) {
     return ['']
@@ -213,28 +248,33 @@ type BrochureMoment = {
 function buildPillGroupMarkup(items: readonly string[], startX: number, startY: number, maxWidth: number) {
   let currentX = startX
   let currentY = startY
+  let currentRow = 1
 
   return items
-    .slice(0, 4)
-    .map((item) => trimText(item, 22))
-    .map((item) => {
-      const pillWidth = Math.min(Math.max(item.length * 8.3 + 28, 110), maxWidth)
+    .slice(0, 3)
+    .map((item) => trimText(item, 16))
+    .reduce((markup, item) => {
+      const pillWidth = Math.min(Math.max(item.length * 7 + 24, 94), maxWidth)
 
       if (currentX + pillWidth > startX + maxWidth) {
+        if (currentRow >= 1) {
+          return markup
+        }
+
         currentX = startX
-        currentY += 42
+        currentY += 38
+        currentRow += 1
       }
 
-      const markup = `
-        <rect x="${currentX}" y="${currentY}" width="${pillWidth}" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.2" stroke="#FFFFFF" stroke-opacity="0.38" />
-        <text x="${currentX + 16}" y="${currentY + 22}" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">${escapeXml(item)}</text>
+      const nextMarkup = `
+        <rect x="${currentX}" y="${currentY}" width="${pillWidth}" height="30" rx="15" fill="#FFF6E3" fill-opacity="0.16" stroke="#F5E7C7" stroke-opacity="0.38" />
+        <text x="${currentX + 14}" y="${currentY + 20}" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="0.4" fill="#FFF7E8">${escapeXml(item)}</text>
       `
 
-      currentX += pillWidth + 10
+      currentX += pillWidth + 8
 
-      return markup
-    })
-    .join('')
+      return `${markup}${nextMarkup}`
+    }, '')
 }
 
 function buildBulletListMarkup(
@@ -248,14 +288,14 @@ function buildBulletListMarkup(
 
   return items
     .slice(0, 4)
-    .map((item) => trimText(item, 28))
+    .map((item) => trimText(item, 24))
     .map((item) => {
       const markup = `
-        <circle cx="${startX}" cy="${currentY - 6}" r="5" fill="${bulletColor}" />
-        <text x="${startX + 16}" y="${currentY}" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="${textColor}">${escapeXml(item)}</text>
+        <circle cx="${startX}" cy="${currentY - 5}" r="4.5" fill="${bulletColor}" />
+        <text x="${startX + 14}" y="${currentY}" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" fill="${textColor}">${escapeXml(item)}</text>
       `
 
-      currentY += 34
+      currentY += 28
 
       return markup
     })
@@ -268,21 +308,18 @@ function buildMomentMarkup(moments: readonly BrochureMoment[], startX: number, s
   return moments
     .slice(0, 3)
     .map((moment, index) => {
-      const headlineLines = clampWrappedLines(moment.headline, 24, 2)
-      const blockHeight = headlineLines.length > 1 ? 58 : 48
+      const headlineLines = clampWrappedLines(moment.headline, 30, 2)
+      const dayLabel = trimText(moment.dayLabel, 14)
+      const blockHeight = headlineLines.length > 1 ? 62 : 54
       const markup = `
-        <circle cx="${startX + 10}" cy="${currentY + 18}" r="11" fill="#1B6FAE" />
-        <text x="${startX + 10}" y="${currentY + 23}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">${index + 1}</text>
-        <text x="${startX + 34}" y="${currentY + 12}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1" fill="#1B6FAE">${escapeXml(moment.dayLabel.toUpperCase())}</text>
-        <text x="${startX + 34}" y="${currentY + 30}" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#31465A">${buildTextSpans(headlineLines, startX + 34, 18)}</text>
-        ${
-          index < Math.min(moments.length, 3) - 1
-            ? `<line x1="${startX + 10}" y1="${currentY + 30}" x2="${startX + 10}" y2="${currentY + blockHeight}" stroke="#C5DBEA" stroke-width="3" stroke-linecap="round" />`
-            : ''
-        }
+        <rect x="${startX}" y="${currentY}" width="352" height="${blockHeight}" rx="22" fill="#FCF6EA" stroke="#E2D2AE" stroke-width="1.5" />
+        <circle cx="${startX + 30}" cy="${currentY + 27}" r="15" fill="#3F6B46" />
+        <text x="${startX + 30}" y="${currentY + 32}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" fill="#FFF8EA">${index + 1}</text>
+        <text x="${startX + 58}" y="${currentY + 21}" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="700" letter-spacing="1.1" fill="#B7772D">${escapeXml(dayLabel.toUpperCase())}</text>
+        <text x="${startX + 58}" y="${currentY + 39}" font-family="Arial, Helvetica, sans-serif" font-size="14.5" font-weight="600" fill="#263523">${buildTextSpans(headlineLines, startX + 58, 16)}</text>
       `
 
-      currentY += blockHeight
+      currentY += blockHeight + 10
 
       return markup
     })
@@ -484,159 +521,217 @@ function buildTourBrochureSvg({
   accentImageDataUrl,
   logoDataUrl,
 }: TourBrochureSvgOptions) {
-  const titleLines = clampWrappedLines(brochureTitle, 17, 3)
-  const overviewLines = clampWrappedLines(overview, 36, 4)
+  const titleLines = clampWrappedLines(brochureTitle, 18, 3)
+  const overviewLines = clampWrappedLines(overview, 38, 3)
   const durationLines = clampWrappedLines(duration, 12, 2)
-  const startEndLines = clampWrappedLines(startEnd, 21, 4)
-  const focusLines = clampWrappedLines(mainFocus, 22, 3)
-  const paceLines = clampWrappedLines(pace, 22, 3)
-  const routeLines = clampWrappedLines(route.replace(/\s*\/\s*/g, ' / '), 52, 2)
-  const routeStyleLines = clampWrappedLines(routeStyle, 58, 2)
-  const bestForLines = clampWrappedLines(bestFor, 34, 3)
-  const noteLines = clampWrappedLines(permitNote, 30, 3)
-  const highlightMarkup = buildPillGroupMarkup(highlights, 106, 534, 336)
-  const experienceMarkup = buildBulletListMarkup(highlights, 122, 968, '#1B6FAE', '#31465A')
-  const includeMarkup = buildBulletListMarkup(includes, 332, 968, '#C97A22', '#31465A')
-  const momentsMarkup = buildMomentMarkup(moments, 544, 956)
-  const heroCaption = trimText(imageCaptions[0] ?? '', 28)
-  const secondaryCaption = trimText(imageCaptions[1] ?? '', 22)
-  const accentCaption = trimText(imageCaptions[2] ?? '', 20)
+  const startEndLines = clampWrappedLines(startEnd, 17, 3)
+  const focusLines = clampWrappedLines(mainFocus, 17, 4)
+  const paceLines = clampWrappedLines(pace, 17, 4)
+  const routeLines = clampWrappedLines(route.replace(/\s*\/\s*/g, ' / '), 27, 2)
+  const routeStyleLines = clampWrappedLines(routeStyle, 31, 3)
+  const bestForLines = clampWrappedLines(bestFor, 28, 2)
+  const noteLines = clampWrappedLines(permitNote, 30, 2)
+  const phoneLines = clampWrappedLines(phoneValue.replace(/\s*\/\s*/g, ' / '), 23, 2)
+  const emailLines = clampWrappedLines(emailValue, 24, 2)
+  const websiteLines = clampWrappedLines(websiteValue, 18, 2)
+  const officeLines = clampWrappedLines(officeValue, 18, 1)
+  const highlightMarkup = buildPillGroupMarkup(highlights, 118, 472, 316)
+  const experienceMarkup = buildBulletListMarkup(highlights, 116, 1048, '#3F6B46', '#2C3925')
+  const includeMarkup = buildBulletListMarkup(includes, 350, 1048, '#C48130', '#2C3925')
+  const momentsMarkup = buildMomentMarkup(moments, 420, 740)
+  const heroCaption = trimText(imageCaptions[0] ?? '', 24)
+  const secondaryCaption = trimText(imageCaptions[1] ?? '', 18)
+  const accentCaption = trimText(imageCaptions[2] ?? '', 16)
 
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1275" viewBox="0 0 900 1275" fill="none">
       <defs>
-        <linearGradient id="page-bg" x1="124" y1="70" x2="786" y2="1208" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#FAFDFF" />
-          <stop offset="1" stop-color="#F7F2E7" />
+        <linearGradient id="page-bg" x1="108" y1="62" x2="790" y2="1223" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FFF9EC" />
+          <stop offset="0.56" stop-color="#F8EFDD" />
+          <stop offset="1" stop-color="#F2E4CB" />
         </linearGradient>
-        <linearGradient id="hero-overlay" x1="100" y1="100" x2="460" y2="570" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#0E3957" stop-opacity="0.94" />
-          <stop offset="1" stop-color="#0E3957" stop-opacity="0.12" />
+        <linearGradient id="hero-bg" x1="92" y1="92" x2="808" y2="518" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#163522" />
+          <stop offset="0.54" stop-color="#24492D" />
+          <stop offset="1" stop-color="#2C5B39" />
         </linearGradient>
-        <linearGradient id="route-band" x1="100" y1="594" x2="804" y2="714" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#EFF7FC" />
-          <stop offset="1" stop-color="#FFFFFF" />
+        <linearGradient id="hero-overlay" x1="164" y1="112" x2="632" y2="536" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#274A2D" stop-opacity="0.05" />
+          <stop offset="1" stop-color="#102615" stop-opacity="0.46" />
         </linearGradient>
-        <linearGradient id="footer-band" x1="100" y1="1124" x2="804" y2="1200" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#154D76" />
-          <stop offset="1" stop-color="#0E6DA6" />
+        <linearGradient id="card-fill" x1="114" y1="548" x2="806" y2="1186" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FFFDF7" />
+          <stop offset="1" stop-color="#F7EEDD" />
         </linearGradient>
-        <linearGradient id="accent-shape" x1="650" y1="188" x2="788" y2="406" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#4BB5EE" />
-          <stop offset="1" stop-color="#1F79B7" />
+        <linearGradient id="accent-shape" x1="678" y1="164" x2="780" y2="452" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#F0C783" />
+          <stop offset="1" stop-color="#C47B28" />
         </linearGradient>
-        <filter id="card-shadow" x="32" y="36" width="836" height="1201" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <linearGradient id="footer-band" x1="92" y1="1186" x2="808" y2="1260" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#21482B" />
+          <stop offset="1" stop-color="#16311E" />
+        </linearGradient>
+        <filter id="card-shadow" x="16" y="20" width="868" height="1239" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
           <feFlood flood-opacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset dy="18"/>
-          <feGaussianBlur stdDeviation="20"/>
-          <feColorMatrix type="matrix" values="0 0 0 0 0.0666667 0 0 0 0 0.137255 0 0 0 0 0.203922 0 0 0 0.18 0"/>
+          <feGaussianBlur stdDeviation="18"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0.145098 0 0 0 0 0.176471 0 0 0 0 0.0980392 0 0 0 0.18 0"/>
+          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"/>
+          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"/>
+        </filter>
+        <filter id="soft-shadow" x="68" y="532" width="764" height="664" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+          <feOffset dy="10"/>
+          <feGaussianBlur stdDeviation="12"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0.192157 0 0 0 0 0.180392 0 0 0 0 0.0901961 0 0 0 0.12 0"/>
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"/>
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"/>
         </filter>
         <clipPath id="hero-clip">
-          <rect x="474" y="122" width="286" height="360" rx="122" />
+          <rect x="548" y="118" width="238" height="296" rx="88" />
         </clipPath>
         <clipPath id="secondary-clip">
-          <rect x="434" y="336" width="182" height="172" rx="34" />
+          <rect x="500" y="326" width="168" height="132" rx="30" />
         </clipPath>
         <clipPath id="accent-clip">
-          <rect x="666" y="372" width="110" height="154" rx="55" />
+          <rect x="684" y="336" width="100" height="160" rx="50" />
+        </clipPath>
+        <clipPath id="hero-pills-clip">
+          <rect x="116" y="468" width="320" height="36" rx="18" />
+        </clipPath>
+        <clipPath id="journey-content-clip">
+          <rect x="410" y="740" width="380" height="204" rx="24" />
+        </clipPath>
+        <clipPath id="notes-content-clip">
+          <rect x="580" y="1036" width="206" height="122" rx="18" />
         </clipPath>
       </defs>
 
-      <rect width="900" height="1275" fill="#EDEAE4" />
+      <rect width="900" height="1275" fill="#E9DFC7" />
       <g filter="url(#card-shadow)">
-        <rect x="68" y="60" width="764" height="1151" rx="40" fill="url(#page-bg)" />
+        <rect x="52" y="52" width="796" height="1171" rx="42" fill="url(#page-bg)" />
       </g>
 
-      <circle cx="722" cy="204" r="132" fill="#EEF8FE" />
-      <circle cx="206" cy="1128" r="156" fill="#F9F3E7" />
-      <path d="M620 104C693 186 743 217 824 227V104H620Z" fill="#EEF7FD" />
-      <rect x="694" y="160" width="98" height="284" rx="49" fill="url(#accent-shape)" opacity="0.92" />
-      <rect x="617" y="198" width="52" height="188" rx="26" fill="#7BC9EF" opacity="0.75" transform="rotate(-28 617 198)" />
+      <circle cx="764" cy="142" r="130" fill="#F4E2BE" fill-opacity="0.48" />
+      <circle cx="166" cy="1160" r="170" fill="#D6C08E" fill-opacity="0.18" />
+      <path d="M94 116C170 92 256 94 336 126C430 164 514 218 610 204" stroke="#DCC79D" stroke-width="2" stroke-opacity="0.42" fill="none" />
+      <path d="M122 1180C230 1120 344 1096 456 1110C572 1122 664 1170 774 1148" stroke="#D9C49D" stroke-width="2" stroke-opacity="0.34" fill="none" />
 
-      <rect x="100" y="100" width="704" height="470" rx="38" fill="#0E3957" />
-      <rect x="100" y="100" width="704" height="470" rx="38" fill="url(#hero-overlay)" />
+      <rect x="92" y="92" width="716" height="426" rx="36" fill="url(#hero-bg)" />
+      <rect x="92" y="92" width="716" height="426" rx="36" fill="url(#hero-overlay)" />
+      <circle cx="734" cy="126" r="136" fill="#54784E" fill-opacity="0.2" />
+      <path d="M492 92C606 168 716 210 808 222V92H492Z" fill="#D8B06A" fill-opacity="0.16" />
+      <path d="M102 496C186 444 280 432 382 474" stroke="#88A175" stroke-width="2" stroke-opacity="0.22" fill="none" />
 
-      <rect x="474" y="122" width="286" height="360" rx="122" fill="#D4E8F4" />
-      <image href="${heroImageDataUrl}" x="474" y="122" width="286" height="360" preserveAspectRatio="xMidYMid slice" clip-path="url(#hero-clip)" />
-      <rect x="474" y="122" width="286" height="360" rx="122" stroke="#FFFFFF" stroke-width="10" />
+      <rect x="704" y="154" width="88" height="252" rx="44" fill="url(#accent-shape)" fill-opacity="0.78" />
+      <rect x="636" y="178" width="58" height="196" rx="29" fill="#F2D3A0" fill-opacity="0.36" transform="rotate(-22 636 178)" />
 
-      <rect x="434" y="336" width="182" height="172" rx="34" fill="#FFFFFF" />
-      <image href="${secondaryImageDataUrl}" x="434" y="336" width="182" height="172" preserveAspectRatio="xMidYMid slice" clip-path="url(#secondary-clip)" />
-      <rect x="434" y="336" width="182" height="172" rx="34" stroke="#FFFFFF" stroke-width="8" />
+      <rect x="548" y="118" width="238" height="296" rx="88" fill="#DCC7A3" />
+      <image href="${heroImageDataUrl}" x="548" y="118" width="238" height="296" preserveAspectRatio="xMidYMid slice" clip-path="url(#hero-clip)" />
+      <rect x="548" y="118" width="238" height="296" rx="88" stroke="#FFF6E3" stroke-width="10" />
 
-      <rect x="666" y="372" width="110" height="154" rx="55" fill="#FFFFFF" />
-      <image href="${accentImageDataUrl}" x="666" y="372" width="110" height="154" preserveAspectRatio="xMidYMid slice" clip-path="url(#accent-clip)" />
-      <rect x="666" y="372" width="110" height="154" rx="55" stroke="#FFFFFF" stroke-width="8" />
+      <rect x="500" y="326" width="168" height="132" rx="30" fill="#F4E7D0" />
+      <image href="${secondaryImageDataUrl}" x="500" y="326" width="168" height="132" preserveAspectRatio="xMidYMid slice" clip-path="url(#secondary-clip)" />
+      <rect x="500" y="326" width="168" height="132" rx="30" stroke="#FFF8EA" stroke-width="8" />
 
-      <rect x="108" y="112" width="68" height="68" rx="20" fill="#F0F8FD" />
-      <image href="${logoDataUrl}" x="114" y="118" width="56" height="56" preserveAspectRatio="xMidYMid meet" />
-      <text x="190" y="138" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" fill="#FFFFFF">${escapeXml(brandName)}</text>
-      <text x="190" y="164" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" fill="#A8DDFB">${escapeXml(brandTagline)}</text>
+      <rect x="684" y="336" width="100" height="160" rx="50" fill="#F4E7D0" />
+      <image href="${accentImageDataUrl}" x="684" y="336" width="100" height="160" preserveAspectRatio="xMidYMid slice" clip-path="url(#accent-clip)" />
+      <rect x="684" y="336" width="100" height="160" rx="50" stroke="#FFF8EA" stroke-width="8" />
 
-      <rect x="108" y="204" width="164" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.18" stroke="#FFFFFF" stroke-opacity="0.36" />
-      <text x="126" y="226" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1" fill="#FFFFFF">${escapeXml(routeLabel.toUpperCase())}</text>
+      <rect x="118" y="116" width="76" height="76" rx="26" fill="#FFF3D9" />
+      <image href="${logoDataUrl}" x="126" y="124" width="60" height="60" preserveAspectRatio="xMidYMid meet" />
+      <text x="212" y="150" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#FFF8EA">${escapeXml(brandName)}</text>
+      <text x="212" y="176" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" fill="#E8D7B5">${escapeXml(brandTagline)}</text>
 
-      <text x="108" y="300" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="700" fill="#FFFFFF">${buildTextSpans(titleLines, 108, 62)}</text>
-      <text x="112" y="446" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#E4F0F7">${buildTextSpans(overviewLines, 112, 27)}</text>
-      ${highlightMarkup}
+      <rect x="118" y="214" width="166" height="34" rx="17" fill="#FFF5E0" fill-opacity="0.14" stroke="#F2E2BE" stroke-opacity="0.38" />
+      <text x="136" y="236" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1" fill="#FFF6E4">${escapeXml(routeLabel.toUpperCase())}</text>
 
-      <rect x="530" y="458" width="186" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.94" />
-      <text x="548" y="478" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" fill="#1A628F">${escapeXml(heroCaption)}</text>
+      <text x="118" y="278" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="700" fill="#FFF9ED">${buildTextSpans(titleLines, 118, 58)}</text>
+      <text x="122" y="422" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#E8DDC7">${buildTextSpans(overviewLines, 122, 24)}</text>
+      <g clip-path="url(#hero-pills-clip)">
+        ${highlightMarkup}
+      </g>
 
-      <rect x="438" y="520" width="156" height="28" rx="14" fill="#FFFFFF" fill-opacity="0.95" />
-      <text x="454" y="538" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#1A628F">${escapeXml(secondaryCaption)}</text>
+      <rect x="580" y="426" width="182" height="28" rx="14" fill="#FFF4DE" fill-opacity="0.96" />
+      <text x="596" y="445" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#6B4B1A">${escapeXml(heroCaption)}</text>
 
-      <rect x="646" y="532" width="140" height="28" rx="14" fill="#FFFFFF" fill-opacity="0.95" />
-      <text x="662" y="550" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#1A628F">${escapeXml(accentCaption)}</text>
+      <rect x="502" y="474" width="154" height="26" rx="13" fill="#FFF7E7" fill-opacity="0.94" />
+      <text x="516" y="491" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="700" fill="#6B4B1A">${escapeXml(secondaryCaption)}</text>
 
-      <rect x="100" y="594" width="704" height="120" rx="30" fill="url(#route-band)" stroke="#D7E6F1" stroke-width="2" />
-      <text x="126" y="632" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" letter-spacing="1.2" fill="#1A6DAB">${escapeXml(routeLabel.toUpperCase())}</text>
-      <text x="126" y="664" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#183B54">${buildTextSpans(routeLines, 126, 28)}</text>
-      <text x="126" y="700" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#5B7080">${buildTextSpans(routeStyleLines, 126, 20)}</text>
+      <rect x="662" y="474" width="128" height="26" rx="13" fill="#FFF7E7" fill-opacity="0.94" />
+      <text x="676" y="491" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="700" fill="#6B4B1A">${escapeXml(accentCaption)}</text>
 
-      <rect x="100" y="736" width="216" height="146" rx="28" fill="#FFFFFF" stroke="#D7E6F1" stroke-width="2" />
-      <text x="124" y="774" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1" fill="#1A6DAB">${escapeXml(durationLabel.toUpperCase())}</text>
-      <text x="124" y="821" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" fill="#183B54">${buildTextSpans(durationLines, 124, 36)}</text>
+      <g filter="url(#soft-shadow)">
+        <rect x="92" y="548" width="164" height="128" rx="24" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+        <rect x="274" y="548" width="164" height="128" rx="24" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+        <rect x="456" y="548" width="164" height="128" rx="24" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+        <rect x="638" y="548" width="164" height="128" rx="24" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
 
-      <rect x="344" y="736" width="216" height="146" rx="28" fill="#FFFFFF" stroke="#D7E6F1" stroke-width="2" />
-      <text x="368" y="774" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1" fill="#1A6DAB">${escapeXml(startEndLabel.toUpperCase())}</text>
-      <text x="368" y="804" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#31465A">${buildTextSpans(startEndLines, 368, 22)}</text>
+        <rect x="92" y="700" width="286" height="256" rx="30" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+        <rect x="396" y="700" width="412" height="256" rx="30" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
 
-      <rect x="588" y="736" width="216" height="146" rx="28" fill="#FFFFFF" stroke="#D7E6F1" stroke-width="2" />
-      <text x="612" y="774" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1" fill="#1A6DAB">${escapeXml(paceLabel.toUpperCase())}</text>
-      <text x="612" y="804" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#31465A">${buildTextSpans(paceLines, 612, 22)}</text>
+        <rect x="92" y="986" width="216" height="178" rx="28" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+        <rect x="326" y="986" width="216" height="178" rx="28" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+        <rect x="560" y="986" width="248" height="178" rx="28" fill="url(#card-fill)" stroke="#E3D3B0" stroke-width="1.5" />
+      </g>
 
-      <rect x="100" y="910" width="192" height="196" rx="28" fill="#FFFFFF" stroke="#D7E6F1" stroke-width="2" />
-      <text x="122" y="946" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#183B54">${escapeXml(topExperiencesLabel)}</text>
+      <text x="116" y="582" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A86D27">${escapeXml(durationLabel.toUpperCase())}</text>
+      <text x="116" y="628" font-family="Georgia, 'Times New Roman', serif" font-size="32" font-weight="700" fill="#243220">${buildTextSpans(durationLines, 116, 34)}</text>
+
+      <text x="298" y="582" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A86D27">${escapeXml(startEndLabel.toUpperCase())}</text>
+      <text x="298" y="612" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" fill="#32422B">${buildTextSpans(startEndLines, 298, 18)}</text>
+
+      <text x="480" y="582" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A86D27">${escapeXml(mainFocusLabel.toUpperCase())}</text>
+      <text x="480" y="612" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" fill="#32422B">${buildTextSpans(focusLines, 480, 18)}</text>
+
+      <text x="662" y="582" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A86D27">${escapeXml(paceLabel.toUpperCase())}</text>
+      <text x="662" y="612" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" fill="#32422B">${buildTextSpans(paceLines, 662, 18)}</text>
+
+      <text x="118" y="738" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2" fill="#A86D27">${escapeXml(routeLabel.toUpperCase())}</text>
+      <text x="118" y="782" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#243220">${buildTextSpans(routeLines, 118, 32)}</text>
+      <line x1="118" y1="842" x2="352" y2="842" stroke="#E5D8BC" stroke-width="1.5" />
+      <text x="118" y="874" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#58634F">${buildTextSpans(routeStyleLines, 118, 20)}</text>
+      <path d="M124 920C170 874 228 930 286 892C308 878 328 860 344 856" stroke="#C78A39" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 10" fill="none" />
+      <circle cx="124" cy="920" r="10" fill="#3F6B46" />
+      <circle cx="236" cy="901" r="9" fill="#F7EDD8" stroke="#C78A39" stroke-width="3" />
+      <circle cx="344" cy="856" r="10" fill="#3F6B46" />
+
+      <text x="420" y="738" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2" fill="#A86D27">${escapeXml(journeyLabel.toUpperCase())}</text>
+      <g clip-path="url(#journey-content-clip)">
+        ${momentsMarkup}
+      </g>
+
+      <text x="116" y="1020" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#243220">${escapeXml(topExperiencesLabel)}</text>
       ${experienceMarkup}
-      <text x="122" y="1072" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#1A6DAB">${escapeXml(mainFocusLabel.toUpperCase())}</text>
-      <text x="122" y="1094" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#5B7080">${buildTextSpans(focusLines, 122, 18)}</text>
 
-      <rect x="310" y="910" width="192" height="196" rx="28" fill="#FFFFFF" stroke="#D7E6F1" stroke-width="2" />
-      <text x="332" y="946" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#183B54">${escapeXml(includedLabel)}</text>
+      <text x="350" y="1020" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#243220">${escapeXml(includedLabel)}</text>
       ${includeMarkup}
-      <text x="332" y="1072" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#C97A22">${escapeXml(bestForLabel.toUpperCase())}</text>
-      <text x="332" y="1094" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#5B7080">${buildTextSpans(bestForLines, 332, 18)}</text>
 
-      <rect x="520" y="910" width="284" height="196" rx="28" fill="#FFFFFF" stroke="#D7E6F1" stroke-width="2" />
-      <text x="544" y="946" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#183B54">${escapeXml(journeyLabel)}</text>
-      ${momentsMarkup}
-      <text x="544" y="1066" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#1A6DAB">${escapeXml(notesLabel.toUpperCase())}</text>
-      <text x="544" y="1088" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#5B7080">${buildTextSpans(noteLines, 544, 18)}</text>
+      <text x="584" y="1020" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#243220">${escapeXml(notesLabel)}</text>
+      <g clip-path="url(#notes-content-clip)">
+        <text x="584" y="1048" font-family="Arial, Helvetica, sans-serif" font-size="13.5" fill="#58634F">${buildTextSpans(noteLines, 584, 16)}</text>
+        <line x1="584" y1="1092" x2="784" y2="1092" stroke="#E5D8BC" stroke-width="1.5" />
+        <text x="584" y="1114" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-weight="700" letter-spacing="1.1" fill="#A86D27">${escapeXml(bestForLabel.toUpperCase())}</text>
+        <text x="584" y="1136" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="600" fill="#32422B">${buildTextSpans(bestForLines, 584, 16)}</text>
+      </g>
 
-      <rect x="100" y="1124" width="704" height="76" rx="26" fill="url(#footer-band)" />
-      <text x="128" y="1152" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A8DBFF">${escapeXml(callLabel.toUpperCase())}</text>
-      <text x="128" y="1181" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#FFFFFF">${escapeXml(phoneValue)}</text>
+      <rect x="92" y="1186" width="716" height="74" rx="26" fill="url(#footer-band)" />
+      <line x1="334" y1="1200" x2="334" y2="1248" stroke="#5A7D55" stroke-width="1.2" />
+      <line x1="586" y1="1200" x2="586" y2="1248" stroke="#5A7D55" stroke-width="1.2" />
 
-      <text x="384" y="1152" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A8DBFF">${escapeXml(emailLabel.toUpperCase())}</text>
-      <text x="384" y="1181" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">${escapeXml(emailValue)}</text>
+      <text x="118" y="1210" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#D9C790">${escapeXml(callLabel.toUpperCase())}</text>
+      <text x="118" y="1236" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#FFF6E4">${buildTextSpans(phoneLines, 118, 18)}</text>
 
-      <text x="648" y="1152" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#A8DBFF">${escapeXml(websiteLabel.toUpperCase())}</text>
-      <text x="648" y="1176" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">${escapeXml(websiteValue)}</text>
-      <text x="648" y="1194" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#D9EEF9">${escapeXml(officeLabel)}: ${escapeXml(officeValue)}</text>
+      <text x="360" y="1210" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#D9C790">${escapeXml(emailLabel.toUpperCase())}</text>
+      <text x="360" y="1236" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#FFF6E4">${buildTextSpans(emailLines, 360, 17)}</text>
+
+      <text x="612" y="1210" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.1" fill="#D9C790">${escapeXml(websiteLabel.toUpperCase())}</text>
+      <text x="612" y="1231" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="700" fill="#FFF6E4">${buildTextSpans(websiteLines, 612, 16)}</text>
+      <text x="612" y="1252" font-family="Arial, Helvetica, sans-serif" font-size="11.5" fill="#E8DFBF">${escapeXml(officeLabel.toUpperCase())}</text>
+      <text x="678" y="1252" font-family="Arial, Helvetica, sans-serif" font-size="11.5" fill="#FFF6E4">${buildTextSpans(officeLines, 678, 14)}</text>
     </svg>
   `.trim()
 }
@@ -757,7 +852,9 @@ export function TourBrochure({ tour, detail }: TourBrochureProps) {
           dayLabel: translatedMomentLabels[index] || day.dayLabel,
           headline: translatedMomentHeadlines[index] || day.headline,
         })),
-        imageCaptions: translatedImageCaptions,
+        imageCaptions: brochureImages.map(
+          (asset, index) => translatedImageCaptions[index] || asset.caption,
+        ),
         heroImageDataUrl: embeddedAssetMap[brochureImages[0].path],
         secondaryImageDataUrl: embeddedAssetMap[brochureImages[1].path],
         accentImageDataUrl: embeddedAssetMap[brochureImages[2].path],

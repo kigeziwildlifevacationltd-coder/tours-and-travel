@@ -49,10 +49,7 @@ export function ServicesPage() {
             '@type': 'ListItem',
             position: index + 1,
             name: service.name,
-            url:
-              typeof window !== 'undefined'
-                ? `${window.location.origin}/services/${service.id}`
-                : `/services/${service.id}`,
+            url: `/services/${service.id}`,
           })),
         },
       },

@@ -185,8 +185,20 @@ function toAbsoluteUrl(siteUrl, pathOrUrl) {
   return new URL(normalizedPath, `${siteUrl}/`).href
 }
 
-function escapeHtml(value) {
+function normalizeSeoText(value) {
   return String(value)
+    .replaceAll('\u2022', ' - ')
+    .replaceAll('\u00e2\u20ac\u00a2', ' - ')
+    .replaceAll('\u2019', "'")
+    .replaceAll('\u2018', "'")
+    .replaceAll('\u201c', '"')
+    .replaceAll('\u201d', '"')
+    .replaceAll('\u2013', '-')
+    .replaceAll('\u2014', '-')
+}
+
+function escapeHtml(value) {
+  return normalizeSeoText(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -197,6 +209,10 @@ function escapeHtml(value) {
 function stripSiteName(title) {
   const suffix = ` | ${siteName}`
   return title.endsWith(suffix) ? title.slice(0, -suffix.length) : title
+}
+
+function buildSeoImageAlt(page) {
+  return `${stripSiteName(page.title)} preview image`
 }
 
 function buildBreadcrumbs(routePath, title) {
@@ -931,6 +947,7 @@ function buildHtmlDocument(page, structuredDataJson, assetTags, data) {
   const robotsDirective = page.noIndex
     ? 'noindex,nofollow,noarchive,max-image-preview:none'
     : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+  const seoImageAlt = buildSeoImageAlt(page)
   const structuredDataScript = structuredDataJson
     ? `    <script type="application/ld+json">${structuredDataJson}</script>\n`
     : ''
@@ -955,10 +972,12 @@ function buildHtmlDocument(page, structuredDataJson, assetTags, data) {
     <meta property="og:locale" content="${siteLocale}" />
     <meta property="og:image" content="${escapeHtml(page.image)}" />
     <meta property="og:image:secure_url" content="${escapeHtml(page.image)}" />
+    <meta property="og:image:alt" content="${escapeHtml(seoImageAlt)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(page.title)}" />
     <meta name="twitter:description" content="${escapeHtml(page.description)}" />
     <meta name="twitter:image" content="${escapeHtml(page.image)}" />
+    <meta name="twitter:image:alt" content="${escapeHtml(seoImageAlt)}" />
     <meta name="twitter:url" content="${escapeHtml(page.canonicalUrl)}" />
     <link rel="canonical" href="${escapeHtml(page.canonicalUrl)}" />
     <link rel="preconnect" href="https://upload.wikimedia.org" crossorigin />

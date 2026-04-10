@@ -57,6 +57,8 @@ export function ServiceDetailPage() {
               '@context': 'https://schema.org',
               '@type': 'Service',
               name: service.name,
+              url: `/services/${service.id}`,
+              mainEntityOfPage: `/services/${service.id}`,
               description: detail.fullDescription,
               provider: {
                 '@type': 'TravelAgency',

@@ -132,6 +132,8 @@ export function TourDetailPage() {
               '@context': 'https://schema.org',
               '@type': 'TouristTrip',
               name: tour.title,
+              url: `/tours/${tour.id}`,
+              mainEntityOfPage: `/tours/${tour.id}`,
               description: detail.overview,
               itinerary: detail.itineraryOutline.join(' '),
               touristType: detail.bestFor,
