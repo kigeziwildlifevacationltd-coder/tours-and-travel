@@ -77,6 +77,10 @@ export function toAbsoluteUrl(pathOrUrl: string): string {
   return new URL(normalizedPath, `${origin}/`).href
 }
 
+function getSiteRootUrl(): string {
+  return toAbsoluteUrl('/')
+}
+
 export function normalizeRoutePath(path: string): string {
   const [pathWithoutHash] = path.split('#')
   const [pathname] = pathWithoutHash.split('?')
@@ -147,10 +151,11 @@ export function buildWebPageStructuredData({
   locale,
   breadcrumbId,
 }: WebPageStructuredDataOptions): StructuredData {
-  const origin = getSiteOrigin()
   const normalizedPath = normalizeRoutePath(path)
+  const siteRootUrl = getSiteRootUrl()
   const pageUrl = toAbsoluteUrl(normalizedPath)
-  const websiteId = `${origin}#website`
+  const websiteId = `${siteRootUrl}#website`
+  const organizationId = `${siteRootUrl}#organization`
   const normalizedLocale = normalizeLocaleForStructuredData(locale)
   const output: StructuredData = {
     '@context': 'https://schema.org',
@@ -164,7 +169,7 @@ export function buildWebPageStructuredData({
       '@id': websiteId,
     },
     about: {
-      '@id': `${origin}#organization`,
+      '@id': organizationId,
     },
   }
 
@@ -178,15 +183,15 @@ export function buildWebPageStructuredData({
 }
 
 export function buildDefaultStructuredData(): StructuredData[] {
-  const origin = getSiteOrigin()
-  const websiteId = `${origin}#website`
-  const organizationId = `${origin}#organization`
+  const siteRootUrl = getSiteRootUrl()
+  const websiteId = `${siteRootUrl}#website`
+  const organizationId = `${siteRootUrl}#organization`
   const logoUrl = toAbsoluteUrl(DEFAULT_SEO_IMAGE)
   const travelAgencyData: StructuredData = {
     '@context': 'https://schema.org',
     '@type': 'TravelAgency',
     '@id': organizationId,
-    url: origin,
+    url: siteRootUrl,
     name: SITE_NAME,
     description: DEFAULT_SEO_DESCRIPTION,
     email: BUSINESS_CONTACT_EMAIL,
@@ -265,7 +270,7 @@ export function buildDefaultStructuredData(): StructuredData[] {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       '@id': websiteId,
-      url: origin,
+      url: siteRootUrl,
       name: SITE_NAME,
       inLanguage: SITE_LANGUAGE,
       description: DEFAULT_SEO_DESCRIPTION,

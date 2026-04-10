@@ -245,8 +245,20 @@ export function ContactPage() {
   return (
     <>
       <PageHero
+        eyebrow={t('contact.heroEyebrow')}
+        title={t('contact.heroTitle')}
+        description={t('contact.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[{ label: t('contact.heroActionBrowseTours'), to: '/tours' }]}
+        highlights={[t('contact.heroHighlight1'), t('contact.heroHighlight2'), t('contact.heroHighlight3')]}
+        panel={{
+          title: t('contact.heroPanelTitle'),
+          points: [
+            t('contact.heroPanelPoint1'),
+            t('contact.heroPanelPoint2'),
+            t('contact.heroPanelPoint3'),
+          ],
+        }}
         backgroundImages={heroBackgroundImages}
       />
 

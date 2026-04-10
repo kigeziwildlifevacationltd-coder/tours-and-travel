@@ -100,8 +100,16 @@ export function AboutPage() {
   return (
     <>
       <PageHero
+        eyebrow={t('about.heroEyebrow')}
+        title={t('about.heroTitle')}
+        description={t('about.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[{ label: t('about.heroActionTalkToTeam'), to: requestTourUrl }]}
+        highlights={[t('about.heroHighlight1'), t('about.heroHighlight2'), t('about.heroHighlight3')]}
+        panel={{
+          title: t('about.heroPanelTitle'),
+          points: [t('about.heroPanelPoint1'), t('about.heroPanelPoint2'), t('about.heroPanelPoint3')],
+        }}
         backgroundImages={heroBackgroundImages}
       />
 

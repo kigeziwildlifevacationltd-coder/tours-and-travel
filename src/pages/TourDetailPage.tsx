@@ -230,8 +230,18 @@ export function TourDetailPage() {
   return (
     <>
       <PageHero
-        title={tour.title}
+        eyebrow={t('tourDetail.heroEyebrow')}
+        title={translatedTourTitle}
+        description={translatedDetailOverview || detail.overview}
         className="hero-actions-centered tour-detail-hero"
+        panel={{
+          title: t('tourDetail.heroPanelTitle'),
+          points: [
+            t('tourDetail.heroPanelPoint1'),
+            t('tourDetail.heroPanelPoint2'),
+            t('tourDetail.heroPanelPoint3'),
+          ],
+        }}
         backgroundImages={heroBackgroundImages}
       />
 

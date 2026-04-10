@@ -586,11 +586,23 @@ export function GalleryPage() {
   return (
     <>
       <PageHero
+        eyebrow={t('gallery.heroEyebrow')}
+        title={t('gallery.heroTitle')}
+        description={t('gallery.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('gallery.heroActionContact'), to: requestTourUrl },
           { label: t('gallery.heroActionTours'), to: '/tours', variant: 'secondary' },
         ]}
+        highlights={[t('gallery.heroHighlight1'), t('gallery.heroHighlight2'), t('gallery.heroHighlight3')]}
+        panel={{
+          title: t('gallery.heroPanelTitle'),
+          points: [
+            t('gallery.heroPanelPoint1'),
+            t('gallery.heroPanelPoint2'),
+            t('gallery.heroPanelPoint3'),
+          ],
+        }}
         backgroundImages={heroBackgroundImages}
       />
 

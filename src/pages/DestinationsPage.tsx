@@ -56,11 +56,27 @@ export function DestinationsPage() {
   return (
     <>
       <PageHero
+        eyebrow={t('destinations.heroEyebrow')}
+        title={t('destinations.heroTitle')}
+        description={t('destinations.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('destinations.heroActionBrowseTours'), to: '/tours' },
           { label: t('destinations.heroActionCustomizeTour'), to: '/tours', variant: 'secondary' },
         ]}
+        highlights={[
+          t('destinations.heroHighlight1'),
+          t('destinations.heroHighlight2'),
+          t('destinations.heroHighlight3'),
+        ]}
+        panel={{
+          title: t('destinations.heroPanelTitle'),
+          points: [
+            t('destinations.heroPanelPoint1'),
+            t('destinations.heroPanelPoint2'),
+            t('destinations.heroPanelPoint3'),
+          ],
+        }}
         backgroundImages={heroBackgroundImages}
       />
 

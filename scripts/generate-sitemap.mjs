@@ -166,6 +166,10 @@ function escapeXml(value) {
     .replaceAll("'", '&apos;')
 }
 
+function toImageAbsoluteUrl(siteUrl, imagePath) {
+  return /^[a-z][a-z\d+.-]*:\/\//i.test(imagePath) ? imagePath : `${siteUrl}${imagePath}`
+}
+
 function isImageFile(fileName) {
   return /\.(png|jpe?g|webp|gif|avif|svg)$/i.test(fileName)
 }
@@ -229,7 +233,10 @@ function generateImageSitemapXml(siteUrl, imageEntries) {
     .map(([pagePath, imagePaths]) => {
       const pageUrl = `${siteUrl}${pagePath}`
       const imageEntriesForPage = [...imagePaths]
-        .map((imagePath) => `    <image:image>\n      <image:loc>${escapeXml(`${siteUrl}${imagePath}`)}</image:loc>\n    </image:image>`)
+        .map(
+          (imagePath) =>
+            `    <image:image>\n      <image:loc>${escapeXml(toImageAbsoluteUrl(siteUrl, imagePath))}</image:loc>\n    </image:image>`,
+        )
         .join('\n')
 
       return [
@@ -264,10 +271,12 @@ function generateRobotsTxt(siteUrl) {
 function run() {
   const siteUrl = getSiteUrl()
   const siteContentData = loadSiteContentData()
-  const tourIds = (Array.isArray(siteContentData?.tours) ? siteContentData.tours : [])
+  const tours = Array.isArray(siteContentData?.tours) ? siteContentData.tours : []
+  const services = Array.isArray(siteContentData?.services) ? siteContentData.services : []
+  const tourIds = tours
     .map((tour) => (typeof tour?.id === 'string' ? tour.id.trim() : ''))
     .filter(Boolean)
-  const serviceIds = (Array.isArray(siteContentData?.services) ? siteContentData.services : [])
+  const serviceIds = services
     .map((service) => (typeof service?.id === 'string' ? service.id.trim() : ''))
     .filter(Boolean)
   const staticRoutes = [
@@ -286,8 +295,34 @@ function run() {
   const allRoutes = [...new Set([...staticRoutes, ...tourRoutes, ...serviceRoutes])]
   const sitemapXml = generateSitemapXml(siteUrl, allRoutes)
   const imagePaths = collectImagePaths(publicImagesDir, 'images')
+  const staticRouteImages = [
+    { pagePath: '/', imagePath: '/images/mountain-road-panorama-0046.jpg' },
+    { pagePath: '/tours', imagePath: '/images/safari-vehicle-in-grassland-0093.jpg' },
+    { pagePath: '/services', imagePath: '/images/luxury-lodge-aerial-view-0094.jpg' },
+    { pagePath: '/destinations', imagePath: '/images/lake-islands-overlook-0031.jpg' },
+    { pagePath: '/about', imagePath: '/images/sunset-over-mountain-ridges-0081.jpg' },
+    { pagePath: '/gallery', imagePath: '/images/gorilla-family-in-forest-0075.jpg' },
+    { pagePath: '/experiences', imagePath: '/images/group-seated-at-forest-viewpoint-0058.jpg' },
+    { pagePath: '/contact-us', imagePath: '/images/group-seated-at-forest-viewpoint-0058.jpg' },
+    { pagePath: '/site-map', imagePath: '/images/mountain-road-panorama-0046.jpg' },
+  ]
+  const tourImageEntries = tours
+    .filter((tour) => typeof tour?.id === 'string' && typeof tour?.image === 'string')
+    .map((tour) => ({
+      pagePath: `/tours/${tour.id.trim()}`,
+      imagePath: tour.image.trim(),
+    }))
+  const serviceImageEntries = services
+    .filter((service) => typeof service?.id === 'string' && typeof service?.image === 'string')
+    .map((service) => ({
+      pagePath: `/services/${service.id.trim()}`,
+      imagePath: service.image.trim(),
+    }))
   const imageEntries = [
     { pagePath: '/', imagePath: '/logo.png' },
+    ...staticRouteImages,
+    ...tourImageEntries,
+    ...serviceImageEntries,
     ...imagePaths.map((imagePath) => ({
       pagePath: '/gallery',
       imagePath,

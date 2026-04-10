@@ -185,6 +185,10 @@ function toAbsoluteUrl(siteUrl, pathOrUrl) {
   return new URL(normalizedPath, `${siteUrl}/`).href
 }
 
+function getSiteRootUrl(siteUrl) {
+  return toAbsoluteUrl(siteUrl, '/')
+}
+
 function normalizeSeoText(value) {
   return String(value)
     .replaceAll('\u2022', ' - ')
@@ -246,15 +250,16 @@ function buildBreadcrumbs(routePath, title) {
 function buildStructuredData(siteUrl, page) {
   const breadcrumbs = buildBreadcrumbs(page.path, page.title)
   const canonicalUrl = page.canonicalUrl
-  const websiteId = `${siteUrl}#website`
-  const organizationId = `${siteUrl}#organization`
+  const siteRootUrl = getSiteRootUrl(siteUrl)
+  const websiteId = `${siteRootUrl}#website`
+  const organizationId = `${siteRootUrl}#organization`
   const breadcrumbId = `${canonicalUrl}#breadcrumb`
   const structuredData = [
     {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       '@id': websiteId,
-      url: `${siteUrl}/`,
+      url: siteRootUrl,
       name: siteName,
       inLanguage: siteLanguage,
       description: defaultDescription,
@@ -266,7 +271,7 @@ function buildStructuredData(siteUrl, page) {
       '@context': 'https://schema.org',
       '@type': 'TravelAgency',
       '@id': organizationId,
-      url: `${siteUrl}/`,
+      url: siteRootUrl,
       name: siteName,
       description: defaultDescription,
       email: businessEmail,
@@ -447,7 +452,7 @@ function buildStaticPage(routePath, data) {
             featuredTours.map((tour) => ({
               href: `/tours/${tour.id}`,
               label: tour.title,
-              meta: `${tour.duration} • ${tour.country}`,
+              meta: `${tour.duration} - ${tour.country}`,
               description: tour.summary,
             })),
           ),
@@ -478,7 +483,7 @@ function buildStaticPage(routePath, data) {
           data.tours.map((tour) => ({
             href: `/tours/${tour.id}`,
             label: tour.title,
-            meta: `${tour.duration} • ${tour.country}`,
+            meta: `${tour.duration} - ${tour.country}`,
             description: tour.summary,
           })),
         ),
@@ -648,7 +653,7 @@ function buildStaticPage(routePath, data) {
           },
           {
             title: 'Phone',
-            body: businessPhones.join(' • '),
+            body: businessPhones.join(', '),
           },
           {
             title: 'Support Topics',
@@ -694,7 +699,7 @@ function buildStaticPage(routePath, data) {
           data.tours.map((tour) => ({
             href: `/tours/${tour.id}`,
             label: tour.title,
-            meta: `${tour.duration} â€¢ ${tour.country}`,
+            meta: `${tour.duration} - ${tour.country}`,
             description: tour.summary,
           })),
         ),
@@ -765,7 +770,7 @@ function buildDynamicPage(routePath, data) {
           relatedTours.map((item) => ({
             href: `/tours/${item.id}`,
             label: item.title,
-            meta: `${item.duration} • ${item.country}`,
+            meta: `${item.duration} - ${item.country}`,
             description: item.summary,
           })),
         ),

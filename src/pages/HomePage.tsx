@@ -104,13 +104,19 @@ export function HomePage() {
   return (
     <>
       <PageHero
-        title=""
-        description=""
+        eyebrow={t('home.heroEyebrow')}
+        title={t('home.heroTitle')}
+        description={t('home.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('home.heroActionBrowseTours'), to: '/tours' },
           { label: t('home.heroActionContact'), to: requestTourUrl, variant: 'accent' },
         ]}
+        highlights={[t('home.heroHighlight1'), t('home.heroHighlight2'), t('home.heroHighlight3')]}
+        panel={{
+          title: t('home.heroPanelTitle'),
+          points: [t('home.heroPanelPoint1'), t('home.heroPanelPoint2'), t('home.heroPanelPoint3')],
+        }}
         backgroundImages={heroBackgroundImages}
         backgroundIntervalMs={5500}
         showScrollCue

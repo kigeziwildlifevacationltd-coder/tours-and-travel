@@ -20,6 +20,7 @@ export function ServiceDetailPage() {
   const service = services.find((item) => item.id === serviceId)
   const detail = service ? getServiceDetail(service) : null
   const translatedServiceName = useRuntimeTranslatedText(service?.name ?? '')
+  const translatedServiceSummary = useRuntimeTranslatedText(service?.description ?? '')
   const translatedDetailDescription = useRuntimeTranslatedText(detail?.fullDescription ?? '')
   const translatedTypicalTimeline = useRuntimeTranslatedText(detail?.typicalTimeline ?? '')
   const translatedDeliverables = useRuntimeTranslatedList(detail?.deliverables ?? [])
@@ -87,11 +88,24 @@ export function ServiceDetailPage() {
   return (
     <>
       <PageHero
+        eyebrow={t('serviceDetail.heroEyebrow')}
+        title={translatedServiceName}
+        description={
+          translatedServiceSummary || service.description || translatedDetailDescription || detail.fullDescription
+        }
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('serviceDetail.heroActionRequest'), to: requestTourUrl },
           { label: t('serviceDetail.heroActionAllServices'), to: '/services', variant: 'secondary' },
         ]}
+        panel={{
+          title: t('serviceDetail.heroPanelTitle'),
+          points: [
+            t('serviceDetail.heroPanelPoint1'),
+            t('serviceDetail.heroPanelPoint2'),
+            t('serviceDetail.heroPanelPoint3'),
+          ],
+        }}
         backgroundImages={heroBackgroundImages}
       />
 
