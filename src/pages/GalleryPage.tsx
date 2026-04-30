@@ -594,7 +594,12 @@ export function GalleryPage() {
           { label: t('gallery.heroActionContact'), to: requestTourUrl },
           { label: t('gallery.heroActionTours'), to: '/tours', variant: 'secondary' },
         ]}
-        highlights={[t('gallery.heroHighlight1'), t('gallery.heroHighlight2'), t('gallery.heroHighlight3')]}
+        highlights={[
+          t('gallery.heroHighlight1'),
+          t('gallery.heroHighlight2'),
+          t('gallery.heroHighlight3'),
+        ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('gallery.heroPanelTitle'),
           points: [
@@ -603,7 +608,6 @@ export function GalleryPage() {
             t('gallery.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

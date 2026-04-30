@@ -11,7 +11,6 @@ import {
   buildEntityKeywordCluster,
   buildPageKeywordCluster,
 } from '../seo/keywordClusters'
-import { isIndexableServiceId } from '../seo/indexableContent'
 import { usePageSeo } from '../seo/usePageSeo'
 
 export function ServiceDetailPage() {
@@ -21,8 +20,8 @@ export function ServiceDetailPage() {
   const service = services.find((item) => item.id === serviceId)
   const detail = service ? getServiceDetail(service) : null
   const translatedServiceName = useRuntimeTranslatedText(service?.name ?? '')
-  const translatedServiceSummary = useRuntimeTranslatedText(service?.description ?? '')
   const translatedDetailDescription = useRuntimeTranslatedText(detail?.fullDescription ?? '')
+  const translatedHighlights = useRuntimeTranslatedList(detail?.highlights ?? [])
   const translatedTypicalTimeline = useRuntimeTranslatedText(detail?.typicalTimeline ?? '')
   const translatedDeliverables = useRuntimeTranslatedList(detail?.deliverables ?? [])
   const translatedServiceNotes = useRuntimeTranslatedList(detail?.serviceNotes ?? [])
@@ -40,7 +39,6 @@ export function ServiceDetailPage() {
     serviceEntityKeywords,
     120,
   )
-  const isIndexableService = isIndexableServiceId(service?.id)
 
   usePageSeo({
     title: translatedServiceName || service?.name || t('serviceDetail.notFoundTitle'),
@@ -50,7 +48,7 @@ export function ServiceDetailPage() {
     image: service?.image ?? '/images/luxury-lodge-aerial-view-0094.jpg',
     imageAlt: service?.name ?? 'Uganda safari service support',
     preloadImage: service?.image,
-    noIndex: !service || !detail || !isIndexableService,
+    noIndex: !service || !detail,
     keywords: serviceDetailKeywordCluster,
     type: 'article',
     structuredData:
@@ -60,8 +58,6 @@ export function ServiceDetailPage() {
               '@context': 'https://schema.org',
               '@type': 'Service',
               name: service.name,
-              url: `/services/${service.id}`,
-              mainEntityOfPage: `/services/${service.id}`,
               description: detail.fullDescription,
               provider: {
                 '@type': 'TravelAgency',
@@ -92,14 +88,14 @@ export function ServiceDetailPage() {
       <PageHero
         eyebrow={t('serviceDetail.heroEyebrow')}
         title={translatedServiceName}
-        description={
-          translatedServiceSummary || service.description || translatedDetailDescription || detail.fullDescription
-        }
+        description={translatedDetailDescription}
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('serviceDetail.heroActionRequest'), to: requestTourUrl },
           { label: t('serviceDetail.heroActionAllServices'), to: '/services', variant: 'secondary' },
         ]}
+        highlights={translatedHighlights}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('serviceDetail.heroPanelTitle'),
           points: [
@@ -108,7 +104,6 @@ export function ServiceDetailPage() {
             t('serviceDetail.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

@@ -106,11 +106,15 @@ export function AboutPage() {
         className="hero-actions-centered hero-actions-bottom"
         actions={[{ label: t('about.heroActionTalkToTeam'), to: requestTourUrl }]}
         highlights={[t('about.heroHighlight1'), t('about.heroHighlight2'), t('about.heroHighlight3')]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('about.heroPanelTitle'),
-          points: [t('about.heroPanelPoint1'), t('about.heroPanelPoint2'), t('about.heroPanelPoint3')],
+          points: [
+            t('about.heroPanelPoint1'),
+            t('about.heroPanelPoint2'),
+            t('about.heroPanelPoint3'),
+          ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

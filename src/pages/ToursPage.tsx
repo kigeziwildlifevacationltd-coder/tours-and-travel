@@ -147,7 +147,10 @@ export function ToursPage() {
             '@type': 'ListItem',
             position: index + 1,
             name: tour.title,
-            url: `/tours/${tour.id}`,
+            url:
+              typeof window !== 'undefined'
+                ? `${window.location.origin}/tours/${tour.id}`
+                : `/tours/${tour.id}`,
           })),
         },
       },
@@ -453,12 +456,20 @@ export function ToursPage() {
           { label: t('tours.heroActionStartPlanning'), to: `/tours#${CUSTOM_TOUR_FORM_ANCHOR}` },
           { label: t('tours.heroActionViewServices'), to: '/services', variant: 'secondary' },
         ]}
-        highlights={[t('tours.heroHighlight1'), t('tours.heroHighlight2'), t('tours.heroHighlight3')]}
+        highlights={[
+          t('tours.heroHighlight1'),
+          t('tours.heroHighlight2'),
+          t('tours.heroHighlight3'),
+        ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('tours.heroPanelTitle'),
-          points: [t('tours.heroPanelPoint1'), t('tours.heroPanelPoint2'), t('tours.heroPanelPoint3')],
+          points: [
+            t('tours.heroPanelPoint1'),
+            t('tours.heroPanelPoint2'),
+            t('tours.heroPanelPoint3'),
+          ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

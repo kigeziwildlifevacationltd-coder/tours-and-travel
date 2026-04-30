@@ -49,7 +49,10 @@ export function ServicesPage() {
             '@type': 'ListItem',
             position: index + 1,
             name: service.name,
-            url: `/services/${service.id}`,
+            url:
+              typeof window !== 'undefined'
+                ? `${window.location.origin}/services/${service.id}`
+                : `/services/${service.id}`,
           })),
         },
       },
@@ -72,6 +75,7 @@ export function ServicesPage() {
           t('services.heroHighlight2'),
           t('services.heroHighlight3'),
         ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('services.heroPanelTitle'),
           points: [
@@ -80,7 +84,6 @@ export function ServicesPage() {
             t('services.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

@@ -32,6 +32,7 @@ export function NotFoundPage() {
           t('notFound.heroHighlight2'),
           t('notFound.heroHighlight3'),
         ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('notFound.heroPanelTitle'),
           points: [
@@ -40,7 +41,6 @@ export function NotFoundPage() {
             t('notFound.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section not-found">

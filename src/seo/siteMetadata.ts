@@ -35,10 +35,6 @@ export const BUSINESS_SOCIAL_LINKS = configuredBusinessSocialLinks
   .map((value) => value.trim())
   .filter((value) => /^https?:\/\//i.test(value))
 
-function isLocalDevelopmentOrigin(origin: string): boolean {
-  return /:\/\/(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|\[::1\])(?::\d+)?$/i.test(origin)
-}
-
 type StructuredData = Record<string, unknown>
 type BreadcrumbItem = {
   name: string
@@ -55,11 +51,7 @@ type WebPageStructuredDataOptions = {
 
 export function getSiteOrigin(): string {
   if (typeof window !== 'undefined' && window.location.origin.trim().length > 0) {
-    const currentOrigin = window.location.origin.trim()
-
-    if (isLocalDevelopmentOrigin(currentOrigin)) {
-      return currentOrigin
-    }
+    return window.location.origin
   }
 
   return FALLBACK_SITE_ORIGIN
@@ -75,10 +67,6 @@ export function toAbsoluteUrl(pathOrUrl: string): string {
   const origin = getSiteOrigin()
   const normalizedPath = normalizedValue.startsWith('/') ? normalizedValue : `/${normalizedValue}`
   return new URL(normalizedPath, `${origin}/`).href
-}
-
-function getSiteRootUrl(): string {
-  return toAbsoluteUrl('/')
 }
 
 export function normalizeRoutePath(path: string): string {
@@ -151,11 +139,10 @@ export function buildWebPageStructuredData({
   locale,
   breadcrumbId,
 }: WebPageStructuredDataOptions): StructuredData {
+  const origin = getSiteOrigin()
   const normalizedPath = normalizeRoutePath(path)
-  const siteRootUrl = getSiteRootUrl()
   const pageUrl = toAbsoluteUrl(normalizedPath)
-  const websiteId = `${siteRootUrl}#website`
-  const organizationId = `${siteRootUrl}#organization`
+  const websiteId = `${origin}#website`
   const normalizedLocale = normalizeLocaleForStructuredData(locale)
   const output: StructuredData = {
     '@context': 'https://schema.org',
@@ -169,7 +156,7 @@ export function buildWebPageStructuredData({
       '@id': websiteId,
     },
     about: {
-      '@id': organizationId,
+      '@id': `${origin}#organization`,
     },
   }
 
@@ -183,15 +170,15 @@ export function buildWebPageStructuredData({
 }
 
 export function buildDefaultStructuredData(): StructuredData[] {
-  const siteRootUrl = getSiteRootUrl()
-  const websiteId = `${siteRootUrl}#website`
-  const organizationId = `${siteRootUrl}#organization`
+  const origin = getSiteOrigin()
+  const websiteId = `${origin}#website`
+  const organizationId = `${origin}#organization`
   const logoUrl = toAbsoluteUrl(DEFAULT_SEO_IMAGE)
   const travelAgencyData: StructuredData = {
     '@context': 'https://schema.org',
     '@type': 'TravelAgency',
     '@id': organizationId,
-    url: siteRootUrl,
+    url: origin,
     name: SITE_NAME,
     description: DEFAULT_SEO_DESCRIPTION,
     email: BUSINESS_CONTACT_EMAIL,
@@ -270,7 +257,7 @@ export function buildDefaultStructuredData(): StructuredData[] {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       '@id': websiteId,
-      url: siteRootUrl,
+      url: origin,
       name: SITE_NAME,
       inLanguage: SITE_LANGUAGE,
       description: DEFAULT_SEO_DESCRIPTION,

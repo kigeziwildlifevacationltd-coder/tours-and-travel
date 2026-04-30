@@ -2,16 +2,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import vm from 'node:vm'
 import { fileURLToPath } from 'node:url'
-import ts from 'typescript'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const projectRoot = path.resolve(__dirname, '..')
 const distDir = path.join(projectRoot, 'dist')
 const siteContentPath = path.join(projectRoot, 'src', 'data', 'siteContent.ts')
-const tourDetailsPath = path.join(projectRoot, 'src', 'data', 'tourDetails.ts')
-const serviceDetailsPath = path.join(projectRoot, 'src', 'data', 'serviceDetails.ts')
-const indexableContentPath = path.join(projectRoot, 'src', 'seo', 'indexableContent.ts')
 const fallbackSiteUrl = 'https://kigeziwildlifevacationsafaris.com'
 
 const siteName = 'Kigezi Wildlife Vacation Safaris'
@@ -189,34 +185,8 @@ function toAbsoluteUrl(siteUrl, pathOrUrl) {
   return new URL(normalizedPath, `${siteUrl}/`).href
 }
 
-function getSiteRootUrl(siteUrl) {
-  return toAbsoluteUrl(siteUrl, '/')
-}
-
-function normalizeSeoText(value) {
-  return String(value)
-    .replaceAll('\u2022', ' - ')
-    .replaceAll('\u00e2\u20ac\u00a2', ' - ')
-    .replaceAll('\u2019', "'")
-    .replaceAll('\u2018', "'")
-    .replaceAll('\u201c', '"')
-    .replaceAll('\u201d', '"')
-    .replaceAll('\u2013', '-')
-    .replaceAll('\u2014', '-')
-}
-
-function inferImageMimeType(imageUrl) {
-  const normalizedPath = imageUrl.split('?')[0].split('#')[0].toLowerCase()
-  if (normalizedPath.endsWith('.png')) return 'image/png'
-  if (normalizedPath.endsWith('.jpg') || normalizedPath.endsWith('.jpeg')) return 'image/jpeg'
-  if (normalizedPath.endsWith('.webp')) return 'image/webp'
-  if (normalizedPath.endsWith('.gif')) return 'image/gif'
-  if (normalizedPath.endsWith('.avif')) return 'image/avif'
-  return 'image/jpeg'
-}
-
 function escapeHtml(value) {
-  return normalizeSeoText(value)
+  return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -227,10 +197,6 @@ function escapeHtml(value) {
 function stripSiteName(title) {
   const suffix = ` | ${siteName}`
   return title.endsWith(suffix) ? title.slice(0, -suffix.length) : title
-}
-
-function buildSeoImageAlt(page) {
-  return `${stripSiteName(page.title)} preview image`
 }
 
 function buildBreadcrumbs(routePath, title) {
@@ -264,16 +230,15 @@ function buildBreadcrumbs(routePath, title) {
 function buildStructuredData(siteUrl, page) {
   const breadcrumbs = buildBreadcrumbs(page.path, page.title)
   const canonicalUrl = page.canonicalUrl
-  const siteRootUrl = getSiteRootUrl(siteUrl)
-  const websiteId = `${siteRootUrl}#website`
-  const organizationId = `${siteRootUrl}#organization`
+  const websiteId = `${siteUrl}#website`
+  const organizationId = `${siteUrl}#organization`
   const breadcrumbId = `${canonicalUrl}#breadcrumb`
   const structuredData = [
     {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       '@id': websiteId,
-      url: siteRootUrl,
+      url: `${siteUrl}/`,
       name: siteName,
       inLanguage: siteLanguage,
       description: defaultDescription,
@@ -285,7 +250,7 @@ function buildStructuredData(siteUrl, page) {
       '@context': 'https://schema.org',
       '@type': 'TravelAgency',
       '@id': organizationId,
-      url: siteRootUrl,
+      url: `${siteUrl}/`,
       name: siteName,
       description: defaultDescription,
       email: businessEmail,
@@ -324,21 +289,15 @@ function buildStructuredData(siteUrl, page) {
     structuredData.push({
       '@context': 'https://schema.org',
       '@type': 'TouristTrip',
-      '@id': `${canonicalUrl}#touristttrip`,
       name: page.heading,
-      url: canonicalUrl,
       description: page.description,
       image: page.image,
       itinerary: page.summary,
       touristType: 'Wildlife travelers and primate safari guests',
-      priceCurrency: 'USD',
       provider: {
         '@type': 'TravelAgency',
-        '@id': organizationId,
         name: siteName,
         url: `${siteUrl}/`,
-        email: businessEmail,
-        telephone: businessPhones[0],
       },
     })
   }
@@ -347,23 +306,13 @@ function buildStructuredData(siteUrl, page) {
     structuredData.push({
       '@context': 'https://schema.org',
       '@type': 'Service',
-      '@id': `${canonicalUrl}#service`,
       name: page.heading,
       description: page.description,
       image: page.image,
-      url: canonicalUrl,
-      serviceType: 'Travel Planning and Booking',
       provider: {
         '@type': 'TravelAgency',
-        '@id': organizationId,
         name: siteName,
         url: `${siteUrl}/`,
-        email: businessEmail,
-        telephone: businessPhones[0],
-      },
-      areaServed: {
-        '@type': 'Country',
-        name: 'Uganda',
       },
     })
   }
@@ -392,77 +341,17 @@ globalThis.__SEO_ROUTE_DATA__ = { navItems, tours, destinations, services, stats
   return context.__SEO_ROUTE_DATA__
 }
 
-function loadTypeScriptModule(filePath, extraContext = {}) {
-  const source = fs.readFileSync(filePath, 'utf8')
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2020,
-    },
-    fileName: path.basename(filePath),
-  }).outputText
-
-  const module = { exports: {} }
-  const context = {
-    module,
-    exports: module.exports,
-    require: () => {
-      throw new Error(`[seo] External imports are not supported when loading ${filePath}`)
-    },
-    console,
-    URL,
-    encodeURIComponent,
-    decodeURIComponent,
-    ...extraContext,
-  }
-
-  vm.createContext(context)
-  vm.runInContext(transpiled, context)
-  return module.exports
-}
-
-function loadRouteDetailHelpers() {
-  const { getTourDetail } = loadTypeScriptModule(tourDetailsPath)
-  const { getServiceDetail } = loadTypeScriptModule(serviceDetailsPath)
-  const { isIndexableServiceId } = loadTypeScriptModule(indexableContentPath)
-
-  return {
-    getTourDetail: typeof getTourDetail === 'function' ? getTourDetail : null,
-    getServiceDetail: typeof getServiceDetail === 'function' ? getServiceDetail : null,
-    isIndexableServiceId:
-      typeof isIndexableServiceId === 'function' ? isIndexableServiceId : () => true,
-  }
-}
-
 function readSitemapRoutes(siteUrl) {
-  const sitemapCandidates = ['sitemap-pages.xml', 'sitemap.xml']
+  const sitemapPath = path.join(distDir, 'sitemap.xml')
+  const sitemapXml = fs.readFileSync(sitemapPath, 'utf8')
+  const routePaths = [...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((match) => {
+      const url = new URL(match[1].trim(), `${siteUrl}/`)
+      return normalizeRoutePath(url.pathname)
+    })
+    .filter(Boolean)
 
-  for (const fileName of sitemapCandidates) {
-    const sitemapPath = path.join(distDir, fileName)
-
-    if (!fs.existsSync(sitemapPath)) {
-      continue
-    }
-
-    const sitemapXml = fs.readFileSync(sitemapPath, 'utf8')
-
-    if (!/<urlset\b/i.test(sitemapXml)) {
-      continue
-    }
-
-    const routePaths = [...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)]
-      .map((match) => {
-        const url = new URL(match[1].trim(), `${siteUrl}/`)
-        return normalizeRoutePath(url.pathname)
-      })
-      .filter(Boolean)
-
-    if (routePaths.length > 0) {
-      return [...new Set(routePaths)]
-    }
-  }
-
-  throw new Error('[seo] No page sitemap was found in dist. Run sitemap generation before prerendering routes.')
+  return [...new Set(routePaths)]
 }
 
 function extractAssetTags(templateHtml) {
@@ -508,18 +397,6 @@ function renderSummaryGrid(items) {
     .join('')}</section>`
 }
 
-function renderTextSection(title, paragraphs) {
-  const normalizedParagraphs = paragraphs.filter((paragraph) => paragraph && paragraph.trim().length > 0)
-
-  if (!normalizedParagraphs.length) {
-    return ''
-  }
-
-  return `<section class="seo-card"><h2>${escapeHtml(title)}</h2>${normalizedParagraphs
-    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
-    .join('')}</section>`
-}
-
 function buildStaticPage(routePath, data) {
   const routeMeta = staticPageCatalog[routePath]
 
@@ -554,7 +431,7 @@ function buildStaticPage(routePath, data) {
             featuredTours.map((tour) => ({
               href: `/tours/${tour.id}`,
               label: tour.title,
-              meta: `${tour.duration} - ${tour.country}`,
+              meta: `${tour.duration} • ${tour.country}`,
               description: tour.summary,
             })),
           ),
@@ -585,7 +462,7 @@ function buildStaticPage(routePath, data) {
           data.tours.map((tour) => ({
             href: `/tours/${tour.id}`,
             label: tour.title,
-            meta: `${tour.duration} - ${tour.country}`,
+            meta: `${tour.duration} • ${tour.country}`,
             description: tour.summary,
           })),
         ),
@@ -755,7 +632,7 @@ function buildStaticPage(routePath, data) {
           },
           {
             title: 'Phone',
-            body: businessPhones.join(', '),
+            body: businessPhones.join(' • '),
           },
           {
             title: 'Support Topics',
@@ -801,7 +678,7 @@ function buildStaticPage(routePath, data) {
           data.tours.map((tour) => ({
             href: `/tours/${tour.id}`,
             label: tour.title,
-            meta: `${tour.duration} - ${tour.country}`,
+            meta: `${tour.duration} â€¢ ${tour.country}`,
             description: tour.summary,
           })),
         ),
@@ -830,7 +707,7 @@ function buildStaticPage(routePath, data) {
   return builder ? builder() : null
 }
 
-function buildDynamicPage(routePath, data, detailHelpers) {
+function buildDynamicPage(routePath, data) {
   if (routePath.startsWith('/tours/')) {
     const tourId = routePath.slice('/tours/'.length)
     const tour = data.tours.find((item) => item.id === tourId)
@@ -840,13 +717,6 @@ function buildDynamicPage(routePath, data, detailHelpers) {
     }
 
     const relatedTours = data.tours.filter((item) => item.id !== tour.id).slice(0, 4)
-    const detail = detailHelpers.getTourDetail ? detailHelpers.getTourDetail(tour) : null
-    const overview = detail?.overview ?? tour.summary
-    const itineraryDays = Array.isArray(detail?.itineraryDays) ? detail.itineraryDays.slice(0, 5) : []
-    const planningNotes = Array.isArray(detail?.planningNotes) ? detail.planningNotes.slice(0, 4) : []
-    const includes = Array.isArray(detail?.includes) ? detail.includes.slice(0, 6) : []
-    const highlights = Array.isArray(detail?.highlights) ? detail.highlights.slice(0, 6) : []
-    const routeSnapshot = detail?.snapshot ?? null
 
     return {
       kind: 'tour',
@@ -854,10 +724,10 @@ function buildDynamicPage(routePath, data, detailHelpers) {
       path: routePath,
       title: `${tour.title} | ${siteName}`,
       heading: tour.title,
-      description: overview,
-      summary: `${tour.duration} safari in ${tour.country}. ${overview}`,
+      description: tour.summary,
+      summary: `${tour.duration} safari in ${tour.country}. ${tour.summary}`,
       image: tour.image,
-      lead: `${tour.duration} safari in ${tour.country}. ${overview}`,
+      lead: `${tour.duration} safari in ${tour.country}. ${tour.summary}`,
       sections: [
         renderSummaryGrid([
           {
@@ -870,49 +740,16 @@ function buildDynamicPage(routePath, data, detailHelpers) {
           },
           {
             title: 'Planning Fit',
-            body: detail?.bestFor ?? 'Suitable for travelers comparing gorilla trekking, wildlife, and scenic route options in Uganda.',
+            body:
+              'Suitable for travelers comparing gorilla trekking, wildlife, and scenic route options in Uganda.',
           },
         ]),
-        renderTextSection('Tour Overview', [
-          overview,
-          routeSnapshot?.routeStyle ?? '',
-        ]),
-        renderLinkList(
-          'Tour Highlights',
-          highlights.map((item) => ({
-            href: '/contact-us',
-            label: item,
-          })),
-        ),
-        renderLinkList(
-          'Sample Day Flow',
-          itineraryDays.map((day) => ({
-            href: '/contact-us',
-            label: `${day.dayLabel}: ${day.headline}`,
-            meta: day.overnightLocation ? `Overnight: ${day.overnightLocation}` : null,
-            description: Array.isArray(day.details) ? day.details.slice(0, 2).join(' ') : '',
-          })),
-        ),
-        renderLinkList(
-          'What Is Usually Included',
-          includes.map((item) => ({
-            href: '/contact-us',
-            label: item,
-          })),
-        ),
-        renderLinkList(
-          'Planning Notes',
-          planningNotes.map((item) => ({
-            href: '/contact-us',
-            label: item,
-          })),
-        ),
         renderLinkList(
           'Related Tours',
           relatedTours.map((item) => ({
             href: `/tours/${item.id}`,
             label: item.title,
-            meta: `${item.duration} - ${item.country}`,
+            meta: `${item.duration} • ${item.country}`,
             description: item.summary,
           })),
         ),
@@ -933,11 +770,6 @@ function buildDynamicPage(routePath, data, detailHelpers) {
     }
 
     const relatedServices = data.services.filter((item) => item.id !== service.id).slice(0, 4)
-    const detail = detailHelpers.getServiceDetail ? detailHelpers.getServiceDetail(service) : null
-    const fullDescription = detail?.fullDescription ?? service.description
-    const deliverables = Array.isArray(detail?.deliverables) ? detail.deliverables.slice(0, 6) : []
-    const travelerInputs = Array.isArray(detail?.travelerInputs) ? detail.travelerInputs.slice(0, 5) : []
-    const serviceNotes = Array.isArray(detail?.serviceNotes) ? detail.serviceNotes.slice(0, 4) : []
 
     return {
       kind: 'service',
@@ -945,50 +777,22 @@ function buildDynamicPage(routePath, data, detailHelpers) {
       path: routePath,
       title: `${service.name} | ${siteName}`,
       heading: service.name,
-      description: fullDescription,
-      summary: fullDescription,
+      description: service.description,
+      summary: service.description,
       image: service.image,
-      lead: fullDescription,
-      noIndex: !detailHelpers.isIndexableServiceId(service.id),
+      lead: service.description,
       sections: [
         renderSummaryGrid([
           {
             title: 'Service Focus',
-            body: fullDescription,
+            body: service.description,
           },
           {
             title: 'Common Use',
-            body: detail?.idealFor ?? 'Useful for travelers who want smoother planning, clearer logistics, and reliable on-ground coordination.',
-          },
-          {
-            title: 'Typical Timeline',
-            body: detail?.typicalTimeline ?? 'Timelines vary based on supplier response windows and seasonality.',
+            body:
+              'Useful for travelers who want smoother planning, clearer logistics, and reliable on-ground coordination.',
           },
         ]),
-        renderTextSection('How This Service Helps', [
-          fullDescription,
-        ]),
-        renderLinkList(
-          'Key Deliverables',
-          deliverables.map((item) => ({
-            href: '/contact-us',
-            label: item,
-          })),
-        ),
-        renderLinkList(
-          'What We Need From You',
-          travelerInputs.map((item) => ({
-            href: '/contact-us',
-            label: item,
-          })),
-        ),
-        renderLinkList(
-          'Important Planning Notes',
-          serviceNotes.map((item) => ({
-            href: '/contact-us',
-            label: item,
-          })),
-        ),
         renderLinkList(
           'Related Services',
           relatedServices.map((item) => ({
@@ -1061,10 +865,10 @@ function buildNotFoundPage(siteUrl) {
   }
 }
 
-function buildPage(routePath, data, siteUrl, detailHelpers) {
+function buildPage(routePath, data, siteUrl) {
   const basePage =
     buildStaticPage(routePath, data) ??
-    buildDynamicPage(routePath, data, detailHelpers) ??
+    buildDynamicPage(routePath, data) ??
     buildFallbackPage(routePath)
   const canonicalUrl =
     routePath === '/' ? `${siteUrl}/` : toAbsoluteUrl(siteUrl, normalizeRoutePath(routePath))
@@ -1127,20 +931,9 @@ function buildHtmlDocument(page, structuredDataJson, assetTags, data) {
   const robotsDirective = page.noIndex
     ? 'noindex,nofollow,noarchive,max-image-preview:none'
     : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
-  const seoImageAlt = buildSeoImageAlt(page)
-  const imageMimeType = inferImageMimeType(page.image)
   const structuredDataScript = structuredDataJson
     ? `    <script type="application/ld+json">${structuredDataJson}</script>\n`
     : ''
-  
-  // Auto-generate keywords from title and description
-  const cleanedTitle = page.title.replace(/\s+\|\s+.+$/, '').trim()
-  const descriptionFragments = page.description
-    .split(/[.!?]/)
-    .map((fragment) => fragment.trim())
-    .filter((fragment) => fragment.length >= 12)
-    .slice(0, 2)
-  const autoKeywords = [cleanedTitle, ...descriptionFragments].filter(Boolean).join(', ')
 
   return `<!doctype html>
 <html lang="${siteLanguage}">
@@ -1150,7 +943,6 @@ function buildHtmlDocument(page, structuredDataJson, assetTags, data) {
     <link rel="apple-touch-icon" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="${escapeHtml(page.description)}" />
-    <meta name="keywords" content="${escapeHtml(autoKeywords)}" />
     <meta name="author" content="${escapeHtml(siteName)}" />
     <meta name="robots" content="${robotsDirective}" />
     <meta name="googlebot" content="${robotsDirective}" />
@@ -1163,15 +955,10 @@ function buildHtmlDocument(page, structuredDataJson, assetTags, data) {
     <meta property="og:locale" content="${siteLocale}" />
     <meta property="og:image" content="${escapeHtml(page.image)}" />
     <meta property="og:image:secure_url" content="${escapeHtml(page.image)}" />
-    <meta property="og:image:type" content="${imageMimeType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="${escapeHtml(seoImageAlt)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(page.title)}" />
     <meta name="twitter:description" content="${escapeHtml(page.description)}" />
     <meta name="twitter:image" content="${escapeHtml(page.image)}" />
-    <meta name="twitter:image:alt" content="${escapeHtml(seoImageAlt)}" />
     <meta name="twitter:url" content="${escapeHtml(page.canonicalUrl)}" />
     <link rel="canonical" href="${escapeHtml(page.canonicalUrl)}" />
     <link rel="preconnect" href="https://upload.wikimedia.org" crossorigin />
@@ -1310,27 +1097,8 @@ function write404Html(html) {
   fs.writeFileSync(path.join(distDir, '404.html'), html, 'utf8')
 }
 
-function getCanonicalRedirectLines(siteUrl) {
-  const site = new URL(siteUrl)
-  const canonicalHttpsOrigin = new URL(`https://${site.host}`).origin
-  const alternateHost = site.host.startsWith('www.') ? site.host.slice(4) : `www.${site.host}`
-  const redirectLines = [`http://${site.host}/* ${canonicalHttpsOrigin}/:splat 301!`]
-
-  if (alternateHost !== site.host) {
-    redirectLines.push(`http://${alternateHost}/* ${canonicalHttpsOrigin}/:splat 301!`)
-    redirectLines.push(`https://${alternateHost}/* ${canonicalHttpsOrigin}/:splat 301!`)
-  }
-
-  return [...new Set(redirectLines)]
-}
-
-function writeNetlifyRedirects(siteUrl) {
-  const redirectLines = [
-    ...getCanonicalRedirectLines(siteUrl),
-    '/index.html / 301',
-    '/legacy-source.html / 301',
-    '/home / 301',
-  ]
+function writeNetlifyRedirects() {
+  const redirectLines = ['/home / 301']
   fs.writeFileSync(path.join(distDir, '_redirects'), `${redirectLines.join('\n')}\n`, 'utf8')
 }
 
@@ -1341,13 +1109,12 @@ function run() {
 
   const siteUrl = getSiteUrl()
   const data = loadSiteContentData()
-  const detailHelpers = loadRouteDetailHelpers()
   const routePaths = readSitemapRoutes(siteUrl)
   const templateHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8')
   const assetTags = extractAssetTags(templateHtml)
 
   routePaths.forEach((routePath) => {
-    const page = buildPage(routePath, data, siteUrl, detailHelpers)
+    const page = buildPage(routePath, data, siteUrl)
     const structuredDataJson = JSON.stringify(buildStructuredData(siteUrl, page))
     const html = buildHtmlDocument(page, structuredDataJson, assetTags, data)
     writeRouteHtml(routePath, html)
@@ -1357,7 +1124,7 @@ function run() {
   const notFoundHtml = buildHtmlDocument(notFoundPage, null, assetTags, data)
   write404Html(notFoundHtml)
 
-  writeNetlifyRedirects(siteUrl)
+  writeNetlifyRedirects()
 
   console.log(`[seo] Prerendered ${routePaths.length} crawlable routes with route-specific HTML.`)
 }

@@ -69,6 +69,7 @@ export function DestinationsPage() {
           t('destinations.heroHighlight2'),
           t('destinations.heroHighlight3'),
         ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('destinations.heroPanelTitle'),
           points: [
@@ -77,7 +78,6 @@ export function DestinationsPage() {
             t('destinations.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

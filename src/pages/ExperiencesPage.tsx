@@ -12,7 +12,6 @@ import {
   buildKeywordCluster,
   buildPageKeywordCluster,
 } from '../seo/keywordClusters'
-import { FALLBACK_SITE_ORIGIN } from '../seo/siteMetadata'
 import { usePageSeo } from '../seo/usePageSeo'
 import { isSupabaseConfigured, supabase } from '../utils/supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
@@ -73,70 +72,7 @@ const profileSectionId = 'traveler-profile'
 const authSectionId = 'experience-auth'
 const shareSectionId = 'share-experience'
 const feedSectionId = 'experience-feed'
-const authReturnToQueryParam = 'authReturnTo'
 const ratingScale = [1, 2, 3, 4, 5]
-
-function normalizeSectionTarget(value: string | null | undefined) {
-  const normalizedValue = (value ?? '').replace(/^#/, '').trim()
-
-  if (
-    normalizedValue === authSectionId ||
-    normalizedValue === profileSectionId ||
-    normalizedValue === shareSectionId ||
-    normalizedValue === feedSectionId
-  ) {
-    return normalizedValue
-  }
-
-  return ''
-}
-
-function isLocalOrigin(origin: string) {
-  return /:\/\/(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0)(?::\d+)?$/i.test(origin)
-}
-
-function buildMagicLinkRedirectUrl(
-  search: string,
-  hash: string,
-  preferredOrigin: 'auto' | 'configured' = 'auto',
-) {
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
-  const baseOrigin =
-    preferredOrigin === 'configured'
-      ? FALLBACK_SITE_ORIGIN
-      : currentOrigin && !isLocalOrigin(currentOrigin)
-        ? currentOrigin
-        : FALLBACK_SITE_ORIGIN
-  const redirectUrl = new URL('/experiences', `${baseOrigin}/`)
-  const currentParams = new URLSearchParams(search)
-  const requestedSection = normalizeSectionTarget(hash)
-  const returnTarget =
-    requestedSection === authSectionId ? profileSectionId : requestedSection || profileSectionId
-
-  for (const key of ['tour', 'rating']) {
-    const value = currentParams.get(key)
-
-    if (value) {
-      redirectUrl.searchParams.set(key, value)
-    }
-  }
-
-  redirectUrl.searchParams.set(authReturnToQueryParam, returnTarget)
-
-  return redirectUrl.toString()
-}
-
-function isRedirectConfigurationError(message: string, code: string) {
-  const normalizedMessage = message.toLowerCase()
-  const normalizedCode = code.toLowerCase()
-
-  return (
-    normalizedMessage.includes('redirect') ||
-    normalizedMessage.includes('redirect_to') ||
-    normalizedMessage.includes('redirect url') ||
-    normalizedCode.includes('redirect')
-  )
-}
 
 export function ExperiencesPage() {
   const { t } = useTranslation()
@@ -227,29 +163,6 @@ export function ExperiencesPage() {
       description: t('experiences.heroDescription'),
     },
   })
-
-  useEffect(() => {
-    if (!session || typeof window === 'undefined') {
-      return
-    }
-
-    const currentUrl = new URL(window.location.href)
-    const returnTarget = normalizeSectionTarget(currentUrl.searchParams.get(authReturnToQueryParam))
-
-    if (!returnTarget) {
-      return
-    }
-
-    currentUrl.searchParams.delete(authReturnToQueryParam)
-    currentUrl.hash = returnTarget
-    window.history.replaceState({}, document.title, `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`)
-
-    const section = document.getElementById(returnTarget)
-
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, [session])
 
   useEffect(() => {
     const supabaseClient = supabase
@@ -562,33 +475,14 @@ export function ExperiencesPage() {
 
     setAuthStatus('sending')
 
-    const redirectTo = buildMagicLinkRedirectUrl(location.search, location.hash)
-    let { error } = await supabase!.auth.signInWithOtp({
+    const redirectTo =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/experiences${window.location.search}${window.location.hash}`
+        : undefined
+    const { error } = await supabase!.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo },
+      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
     })
-
-    if (error && isRedirectConfigurationError(error.message ?? '', error.code ?? '')) {
-      const configuredRedirectTo = buildMagicLinkRedirectUrl(
-        location.search,
-        location.hash,
-        'configured',
-      )
-
-      if (configuredRedirectTo !== redirectTo) {
-        const configuredResult = await supabase!.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: configuredRedirectTo },
-        })
-
-        error = configuredResult.error
-      }
-
-      if (error && isRedirectConfigurationError(error.message ?? '', error.code ?? '')) {
-        const fallbackResult = await supabase!.auth.signInWithOtp({ email })
-        error = fallbackResult.error
-      }
-    }
 
     if (error) {
       console.warn('[experiences] Failed to send magic link.', error)
@@ -644,6 +538,7 @@ export function ExperiencesPage() {
           t('experiences.heroHighlight2'),
           t('experiences.heroHighlight3'),
         ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('experiences.heroPanelTitle'),
           points: [
@@ -652,7 +547,6 @@ export function ExperiencesPage() {
             t('experiences.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">

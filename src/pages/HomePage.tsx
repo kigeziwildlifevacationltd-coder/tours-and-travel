@@ -69,6 +69,7 @@ const homeSeoFaqSchema = {
 export function HomePage() {
   const { t } = useTranslation()
   const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
+  const featuredTours = tours.filter((tour) => tour.featured).slice(0, 3)
 
   usePageSeo({
     title: t('home.heroTitle'),
@@ -104,19 +105,13 @@ export function HomePage() {
   return (
     <>
       <PageHero
-        eyebrow={t('home.heroEyebrow')}
-        title={t('home.heroTitle')}
-        description={t('home.heroDescription')}
+        title=""
+        description=""
         className="hero-actions-centered hero-actions-bottom"
         actions={[
           { label: t('home.heroActionBrowseTours'), to: '/tours' },
           { label: t('home.heroActionContact'), to: requestTourUrl, variant: 'accent' },
         ]}
-        highlights={[t('home.heroHighlight1'), t('home.heroHighlight2'), t('home.heroHighlight3')]}
-        panel={{
-          title: t('home.heroPanelTitle'),
-          points: [t('home.heroPanelPoint1'), t('home.heroPanelPoint2'), t('home.heroPanelPoint3')],
-        }}
         backgroundImages={heroBackgroundImages}
         backgroundIntervalMs={5500}
         showScrollCue
@@ -126,13 +121,18 @@ export function HomePage() {
       <section id="featured-tours" className="section">
         <div className="container">
           <SectionHeading
-            title={`${tours.length} ${t('tours.availableToursSuffix')}`}
-            subtitle={t('tours.availableToursSubtitle')}
+            title={t('home.featuredToursTitle')}
+            subtitle={t('home.featuredToursSubtitle')}
           />
           <div className="card-grid tours-grid">
-            {tours.map((tour) => (
+            {featuredTours.map((tour) => (
               <TourCard key={tour.id} tour={tour} />
             ))}
+          </div>
+          <div className="section-actions">
+            <Link to="/tours" className="btn btn-primary">
+              {t('home.viewAllTours')}
+            </Link>
           </div>
         </div>
       </section>

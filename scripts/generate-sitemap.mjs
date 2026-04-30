@@ -1,8 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import vm from 'node:vm'
-import ts from 'typescript'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -10,10 +8,6 @@ const projectRoot = path.resolve(__dirname, '..')
 const publicDir = path.join(projectRoot, 'public')
 const publicImagesDir = path.join(publicDir, 'images')
 const siteContentPath = path.join(projectRoot, 'src', 'data', 'siteContent.ts')
-const indexableContentPath = path.join(projectRoot, 'src', 'seo', 'indexableContent.ts')
-const ROOT_SITEMAP_FILE = 'sitemap.xml'
-const PAGE_SITEMAP_FILE = 'sitemap-pages.xml'
-const IMAGE_SITEMAP_FILE = 'sitemap-images.xml'
 
 function parseDotEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -80,60 +74,32 @@ function getSiteUrl() {
   return normalizedUrl.origin.replace(/\/+$/, '')
 }
 
-function loadSiteContentData() {
-  const source = fs.readFileSync(siteContentPath, 'utf8')
-  const sanitizedSource = source
-    .replace(/^import .*$/gm, '')
-    .replace(/export const (\w+): [^=]+ =/g, 'const $1 =')
-    .replace(/export const (\w+) =/g, 'const $1 =')
+function extractArrayBlock(content, startMarker, endMarker) {
+  const startIndex = content.indexOf(startMarker)
 
-  const context = {
-    partnerLogo: '/logo.png',
+  if (startIndex < 0) {
+    return ''
   }
 
-  vm.createContext(context)
-  vm.runInContext(
-    `${sanitizedSource}
-globalThis.__SEO_ROUTE_DATA__ = { tours, services };`,
-    context,
-  )
+  const endIndex = content.indexOf(endMarker, startIndex)
 
-  return context.__SEO_ROUTE_DATA__
-}
-
-function loadTypeScriptModule(filePath) {
-  const source = fs.readFileSync(filePath, 'utf8')
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2020,
-    },
-    fileName: path.basename(filePath),
-  }).outputText
-
-  const module = { exports: {} }
-  const context = {
-    module,
-    exports: module.exports,
-    require: () => {
-      throw new Error(`[seo] External imports are not supported when loading ${filePath}`)
-    },
-    console,
+  if (endIndex < 0) {
+    return content.slice(startIndex)
   }
 
-  vm.createContext(context)
-  vm.runInContext(transpiled, context)
-  return module.exports
+  return content.slice(startIndex, endIndex)
 }
 
-function loadIndexableServiceIds() {
-  const moduleExports = loadTypeScriptModule(indexableContentPath)
-  const getIndexableServiceIds =
-    typeof moduleExports.getIndexableServiceIds === 'function'
-      ? moduleExports.getIndexableServiceIds
-      : null
+function extractIdsFromBlock(block) {
+  const idRegex = /id:\s*'([^']+)'/g
+  const ids = []
+  let match
 
-  return getIndexableServiceIds ? getIndexableServiceIds() : []
+  while ((match = idRegex.exec(block)) !== null) {
+    ids.push(match[1])
+  }
+
+  return ids
 }
 
 function getRoutePriority(routePath) {
@@ -169,7 +135,7 @@ function getRouteChangeFrequency(routePath) {
   return 'monthly'
 }
 
-function generatePageSitemapXml(siteUrl, routes) {
+function generateSitemapXml(siteUrl, routes) {
   const lastModified = new Date().toISOString()
   const urlEntries = routes
     .map((routePath) => {
@@ -179,7 +145,7 @@ function generatePageSitemapXml(siteUrl, routes) {
 
       return [
         '  <url>',
-        `    <loc>${escapeXml(routeUrl)}</loc>`,
+        `    <loc>${routeUrl}</loc>`,
         `    <lastmod>${lastModified}</lastmod>`,
         `    <changefreq>${changeFrequency}</changefreq>`,
         `    <priority>${priority}</priority>`,
@@ -197,24 +163,6 @@ function generatePageSitemapXml(siteUrl, routes) {
   ].join('\n')
 }
 
-function generateSitemapIndexXml(siteUrl, sitemapFiles) {
-  const sitemapEntries = sitemapFiles
-    .map((fileName) => {
-      const sitemapUrl = `${siteUrl}/${fileName}`
-
-      return ['  <sitemap>', `    <loc>${escapeXml(sitemapUrl)}</loc>`, '  </sitemap>'].join('\n')
-    })
-    .join('\n')
-
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    sitemapEntries,
-    '</sitemapindex>',
-    '',
-  ].join('\n')
-}
-
 function escapeXml(value) {
   return value
     .replaceAll('&', '&amp;')
@@ -222,10 +170,6 @@ function escapeXml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&apos;')
-}
-
-function toImageAbsoluteUrl(siteUrl, imagePath) {
-  return /^[a-z][a-z\d+.-]*:\/\//i.test(imagePath) ? imagePath : `${siteUrl}${imagePath}`
 }
 
 function isImageFile(fileName) {
@@ -291,10 +235,7 @@ function generateImageSitemapXml(siteUrl, imageEntries) {
     .map(([pagePath, imagePaths]) => {
       const pageUrl = `${siteUrl}${pagePath}`
       const imageEntriesForPage = [...imagePaths]
-        .map(
-          (imagePath) =>
-            `    <image:image>\n      <image:loc>${escapeXml(toImageAbsoluteUrl(siteUrl, imagePath))}</image:loc>\n    </image:image>`,
-        )
+        .map((imagePath) => `    <image:image>\n      <image:loc>${escapeXml(`${siteUrl}${imagePath}`)}</image:loc>\n    </image:image>`)
         .join('\n')
 
       return [
@@ -320,23 +261,28 @@ function generateRobotsTxt(siteUrl) {
     'User-agent: *',
     'Allow: /',
     '',
-    `Sitemap: ${siteUrl}/${ROOT_SITEMAP_FILE}`,
+    `Sitemap: ${siteUrl}/sitemap.xml`,
+    `Sitemap: ${siteUrl}/sitemap-images.xml`,
     '',
   ].join('\n')
 }
 
 function run() {
   const siteUrl = getSiteUrl()
-  const siteContentData = loadSiteContentData()
-  const indexableServiceIds = new Set(loadIndexableServiceIds())
-  const tours = Array.isArray(siteContentData?.tours) ? siteContentData.tours : []
-  const services = Array.isArray(siteContentData?.services) ? siteContentData.services : []
-  const tourIds = tours
-    .map((tour) => (typeof tour?.id === 'string' ? tour.id.trim() : ''))
-    .filter(Boolean)
-  const serviceIds = services
-    .map((service) => (typeof service?.id === 'string' ? service.id.trim() : ''))
-    .filter((serviceId) => Boolean(serviceId) && indexableServiceIds.has(serviceId))
+  const siteContent = fs.readFileSync(siteContentPath, 'utf8')
+  const toursBlock = extractArrayBlock(
+    siteContent,
+    'export const tours: Tour[] = [',
+    'export const destinations: Destination[] = [',
+  )
+  const servicesBlock = extractArrayBlock(
+    siteContent,
+    'export const services: Service[] = [',
+    'export const stats = [',
+  )
+
+  const tourIds = extractIdsFromBlock(toursBlock)
+  const serviceIds = extractIdsFromBlock(servicesBlock)
   const staticRoutes = [
     '/',
     '/tours',
@@ -351,58 +297,25 @@ function run() {
   const tourRoutes = tourIds.map((tourId) => `/tours/${tourId}`)
   const serviceRoutes = serviceIds.map((serviceId) => `/services/${serviceId}`)
   const allRoutes = [...new Set([...staticRoutes, ...tourRoutes, ...serviceRoutes])]
-  const pageSitemapXml = generatePageSitemapXml(siteUrl, allRoutes)
+  const sitemapXml = generateSitemapXml(siteUrl, allRoutes)
   const imagePaths = collectImagePaths(publicImagesDir, 'images')
-  const staticRouteImages = [
-    { pagePath: '/', imagePath: '/images/mountain-road-panorama-0046.jpg' },
-    { pagePath: '/tours', imagePath: '/images/safari-vehicle-in-grassland-0093.jpg' },
-    { pagePath: '/services', imagePath: '/images/luxury-lodge-aerial-view-0094.jpg' },
-    { pagePath: '/destinations', imagePath: '/images/lake-islands-overlook-0031.jpg' },
-    { pagePath: '/about', imagePath: '/images/sunset-over-mountain-ridges-0081.jpg' },
-    { pagePath: '/gallery', imagePath: '/images/gorilla-family-in-forest-0075.jpg' },
-    { pagePath: '/experiences', imagePath: '/images/group-seated-at-forest-viewpoint-0058.jpg' },
-    { pagePath: '/contact-us', imagePath: '/images/group-seated-at-forest-viewpoint-0058.jpg' },
-    { pagePath: '/site-map', imagePath: '/images/mountain-road-panorama-0046.jpg' },
-  ]
-  const tourImageEntries = tours
-    .filter((tour) => typeof tour?.id === 'string' && typeof tour?.image === 'string')
-    .map((tour) => ({
-      pagePath: `/tours/${tour.id.trim()}`,
-      imagePath: tour.image.trim(),
-    }))
-  const serviceImageEntries = services
-    .filter(
-      (service) =>
-        typeof service?.id === 'string' &&
-        indexableServiceIds.has(service.id.trim()) &&
-        typeof service?.image === 'string',
-    )
-    .map((service) => ({
-      pagePath: `/services/${service.id.trim()}`,
-      imagePath: service.image.trim(),
-    }))
   const imageEntries = [
     { pagePath: '/', imagePath: '/logo.png' },
-    ...staticRouteImages,
-    ...tourImageEntries,
-    ...serviceImageEntries,
     ...imagePaths.map((imagePath) => ({
       pagePath: '/gallery',
       imagePath,
     })),
   ]
-  const sitemapIndexXml = generateSitemapIndexXml(siteUrl, [PAGE_SITEMAP_FILE, IMAGE_SITEMAP_FILE])
   const imageSitemapXml = generateImageSitemapXml(siteUrl, imageEntries)
   const robotsTxt = generateRobotsTxt(siteUrl)
 
   fs.mkdirSync(publicDir, { recursive: true })
-  fs.writeFileSync(path.join(publicDir, ROOT_SITEMAP_FILE), sitemapIndexXml, 'utf8')
-  fs.writeFileSync(path.join(publicDir, PAGE_SITEMAP_FILE), pageSitemapXml, 'utf8')
-  fs.writeFileSync(path.join(publicDir, IMAGE_SITEMAP_FILE), imageSitemapXml, 'utf8')
+  fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemapXml, 'utf8')
+  fs.writeFileSync(path.join(publicDir, 'sitemap-images.xml'), imageSitemapXml, 'utf8')
   fs.writeFileSync(path.join(publicDir, 'robots.txt'), robotsTxt, 'utf8')
 
   console.log(
-    `[seo] Generated sitemap.xml index, ${PAGE_SITEMAP_FILE} (${allRoutes.length} URLs), ${IMAGE_SITEMAP_FILE} (${imageEntries.length} images), and robots.txt for ${siteUrl}`,
+    `[seo] Generated sitemap.xml (${allRoutes.length} URLs), sitemap-images.xml (${imageEntries.length} images), and robots.txt for ${siteUrl}`,
   )
 }
 

@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://kigeziwildlifevacationsafaris.com/sitemap.xml
+Sitemap: https://kigeziwildlifevacationsafaris.com/sitemap-images.xml

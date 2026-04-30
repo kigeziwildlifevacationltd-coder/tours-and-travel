@@ -250,7 +250,12 @@ export function ContactPage() {
         description={t('contact.heroDescription')}
         className="hero-actions-centered hero-actions-bottom"
         actions={[{ label: t('contact.heroActionBrowseTours'), to: '/tours' }]}
-        highlights={[t('contact.heroHighlight1'), t('contact.heroHighlight2'), t('contact.heroHighlight3')]}
+        highlights={[
+          t('contact.heroHighlight1'),
+          t('contact.heroHighlight2'),
+          t('contact.heroHighlight3'),
+        ]}
+        backgroundImages={heroBackgroundImages}
         panel={{
           title: t('contact.heroPanelTitle'),
           points: [
@@ -259,7 +264,6 @@ export function ContactPage() {
             t('contact.heroPanelPoint3'),
           ],
         }}
-        backgroundImages={heroBackgroundImages}
       />
 
       <section className="section">
