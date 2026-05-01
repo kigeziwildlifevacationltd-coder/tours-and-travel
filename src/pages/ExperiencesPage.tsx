@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { PageHero } from '../components/PageHero'
 import { SectionHeading } from '../components/SectionHeading'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { tours } from '../data/siteContent'
 import {
   GORILLA_TREKKING_KEYWORDS,
@@ -524,31 +522,6 @@ export function ExperiencesPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t('experiences.heroEyebrow')}
-        title={t('experiences.heroTitle')}
-        description={t('experiences.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('experiences.heroActionPrimary'), to: `/experiences#${profileSectionId}` },
-          { label: t('experiences.heroActionSecondary'), to: `/experiences#${shareSectionId}`, variant: 'secondary' },
-        ]}
-        highlights={[
-          t('experiences.heroHighlight1'),
-          t('experiences.heroHighlight2'),
-          t('experiences.heroHighlight3'),
-        ]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('experiences.heroPanelTitle'),
-          points: [
-            t('experiences.heroPanelPoint1'),
-            t('experiences.heroPanelPoint2'),
-            t('experiences.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container experiences-layout">
           <div className="experiences-forms">

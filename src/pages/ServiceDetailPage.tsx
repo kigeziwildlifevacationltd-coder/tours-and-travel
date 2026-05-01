@@ -1,7 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
-import { PageHero } from '../components/PageHero'
+import { SectionHeading } from '../components/SectionHeading'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { services } from '../data/siteContent'
 import { getServiceDetail } from '../data/serviceDetails'
 import { useRuntimeTranslatedList, useRuntimeTranslatedText } from '../hooks/useRuntimeTranslation'
@@ -15,13 +14,11 @@ import { usePageSeo } from '../seo/usePageSeo'
 
 export function ServiceDetailPage() {
   const { t } = useTranslation()
-  const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
   const { serviceId } = useParams<{ serviceId: string }>()
   const service = services.find((item) => item.id === serviceId)
   const detail = service ? getServiceDetail(service) : null
   const translatedServiceName = useRuntimeTranslatedText(service?.name ?? '')
   const translatedDetailDescription = useRuntimeTranslatedText(detail?.fullDescription ?? '')
-  const translatedHighlights = useRuntimeTranslatedList(detail?.highlights ?? [])
   const translatedTypicalTimeline = useRuntimeTranslatedText(detail?.typicalTimeline ?? '')
   const translatedDeliverables = useRuntimeTranslatedList(detail?.deliverables ?? [])
   const translatedServiceNotes = useRuntimeTranslatedList(detail?.serviceNotes ?? [])
@@ -83,31 +80,15 @@ export function ServiceDetailPage() {
     )
   }
 
+  const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
+
   return (
     <>
-      <PageHero
-        eyebrow={t('serviceDetail.heroEyebrow')}
-        title={translatedServiceName}
-        description={translatedDetailDescription}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('serviceDetail.heroActionRequest'), to: requestTourUrl },
-          { label: t('serviceDetail.heroActionAllServices'), to: '/services', variant: 'secondary' },
-        ]}
-        highlights={translatedHighlights}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('serviceDetail.heroPanelTitle'),
-          points: [
-            t('serviceDetail.heroPanelPoint1'),
-            t('serviceDetail.heroPanelPoint2'),
-            t('serviceDetail.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container service-detail-layout">
+          <div className="service-detail-page-heading">
+            <SectionHeading title={translatedServiceName} subtitle={translatedDetailDescription} />
+          </div>
           <article className="service-detail-panel">
             <p className="service-detail-label">{t('serviceDetail.scopeLabel')}</p>
             <h3>{t('serviceDetail.whatYouReceive')}</h3>

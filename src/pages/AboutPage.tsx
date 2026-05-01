@@ -1,8 +1,6 @@
-import { PageHero } from '../components/PageHero'
 import { SectionHeading } from '../components/SectionHeading'
 import { ExperienceCallout } from '../components/ExperienceCallout'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { stats } from '../data/siteContent'
 import {
   GORILLA_TREKKING_KEYWORDS,
@@ -15,7 +13,6 @@ import companyLogo from '../assets/logo.png'
 
 export function AboutPage() {
   const { t } = useTranslation()
-  const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
   const productsOffered = [
     t('about.productService1'),
     t('about.productService2'),
@@ -99,24 +96,6 @@ export function AboutPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t('about.heroEyebrow')}
-        title={t('about.heroTitle')}
-        description={t('about.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[{ label: t('about.heroActionTalkToTeam'), to: requestTourUrl }]}
-        highlights={[t('about.heroHighlight1'), t('about.heroHighlight2'), t('about.heroHighlight3')]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('about.heroPanelTitle'),
-          points: [
-            t('about.heroPanelPoint1'),
-            t('about.heroPanelPoint2'),
-            t('about.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container">
           <SectionHeading title={t('about.companyProfileTitle')} subtitle={t('about.companyProfileSubtitle')} />

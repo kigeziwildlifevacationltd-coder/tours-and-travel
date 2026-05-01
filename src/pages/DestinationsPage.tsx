@@ -1,9 +1,7 @@
 import { DestinationCard } from '../components/DestinationCard'
-import { PageHero } from '../components/PageHero'
 import { SectionHeading } from '../components/SectionHeading'
 import { ExperienceCallout } from '../components/ExperienceCallout'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { destinations } from '../data/siteContent'
 import {
   GORILLA_TREKKING_KEYWORDS,
@@ -55,31 +53,6 @@ export function DestinationsPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t('destinations.heroEyebrow')}
-        title={t('destinations.heroTitle')}
-        description={t('destinations.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('destinations.heroActionBrowseTours'), to: '/tours' },
-          { label: t('destinations.heroActionCustomizeTour'), to: '/tours', variant: 'secondary' },
-        ]}
-        highlights={[
-          t('destinations.heroHighlight1'),
-          t('destinations.heroHighlight2'),
-          t('destinations.heroHighlight3'),
-        ]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('destinations.heroPanelTitle'),
-          points: [
-            t('destinations.heroPanelPoint1'),
-            t('destinations.heroPanelPoint2'),
-            t('destinations.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container">
           <SectionHeading

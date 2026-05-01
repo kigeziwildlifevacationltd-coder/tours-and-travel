@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import vm from 'node:vm'
 import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -8,6 +9,7 @@ const projectRoot = path.resolve(__dirname, '..')
 const publicDir = path.join(projectRoot, 'public')
 const publicImagesDir = path.join(publicDir, 'images')
 const siteContentPath = path.join(projectRoot, 'src', 'data', 'siteContent.ts')
+const fallbackSiteUrl = 'https://kigeziwildlifevacationsafaris.com'
 
 function parseDotEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -57,7 +59,7 @@ function getSiteUrl() {
     process.env.SITE_URL ??
     envFromFiles.VITE_SITE_URL ??
     envFromFiles.SITE_URL ??
-    'https://kigeziwildlifevacationsafaris.com'
+    fallbackSiteUrl
   ).trim()
 
   const withProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(rawValue)
@@ -74,32 +76,25 @@ function getSiteUrl() {
   return normalizedUrl.origin.replace(/\/+$/, '')
 }
 
-function extractArrayBlock(content, startMarker, endMarker) {
-  const startIndex = content.indexOf(startMarker)
+function loadSiteContentData() {
+  const source = fs.readFileSync(siteContentPath, 'utf8')
+  const sanitizedSource = source
+    .replace(/^import .*$/gm, '')
+    .replace(/export const (\w+): [^=]+ =/g, 'const $1 =')
+    .replace(/export const (\w+) =/g, 'const $1 =')
 
-  if (startIndex < 0) {
-    return ''
+  const context = {
+    partnerLogo: '/logo.png',
   }
 
-  const endIndex = content.indexOf(endMarker, startIndex)
+  vm.createContext(context)
+  vm.runInContext(
+    `${sanitizedSource}
+globalThis.__SEO_ROUTE_DATA__ = { tours, destinations, services };`,
+    context,
+  )
 
-  if (endIndex < 0) {
-    return content.slice(startIndex)
-  }
-
-  return content.slice(startIndex, endIndex)
-}
-
-function extractIdsFromBlock(block) {
-  const idRegex = /id:\s*'([^']+)'/g
-  const ids = []
-  let match
-
-  while ((match = idRegex.exec(block)) !== null) {
-    ids.push(match[1])
-  }
-
-  return ids
+  return context.__SEO_ROUTE_DATA__
 }
 
 function getRoutePriority(routePath) {
@@ -145,7 +140,7 @@ function generateSitemapXml(siteUrl, routes) {
 
       return [
         '  <url>',
-        `    <loc>${routeUrl}</loc>`,
+        `    <loc>${escapeXml(routeUrl)}</loc>`,
         `    <lastmod>${lastModified}</lastmod>`,
         `    <changefreq>${changeFrequency}</changefreq>`,
         `    <priority>${priority}</priority>`,
@@ -267,22 +262,36 @@ function generateRobotsTxt(siteUrl) {
   ].join('\n')
 }
 
+function isAbsoluteUrl(value) {
+  return /^[a-z][a-z\d+.-]*:/i.test(value)
+}
+
+function normalizeImagePath(value) {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+
+  if (trimmed.length === 0) {
+    return null
+  }
+
+  if (isAbsoluteUrl(trimmed)) {
+    try {
+      const url = new URL(trimmed)
+      return `${url.origin}${url.pathname}`
+    } catch {
+      return trimmed
+    }
+  }
+
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+}
+
 function run() {
   const siteUrl = getSiteUrl()
-  const siteContent = fs.readFileSync(siteContentPath, 'utf8')
-  const toursBlock = extractArrayBlock(
-    siteContent,
-    'export const tours: Tour[] = [',
-    'export const destinations: Destination[] = [',
-  )
-  const servicesBlock = extractArrayBlock(
-    siteContent,
-    'export const services: Service[] = [',
-    'export const stats = [',
-  )
-
-  const tourIds = extractIdsFromBlock(toursBlock)
-  const serviceIds = extractIdsFromBlock(servicesBlock)
+  const data = loadSiteContentData()
   const staticRoutes = [
     '/',
     '/tours',
@@ -294,13 +303,44 @@ function run() {
     '/contact-us',
     '/site-map',
   ]
-  const tourRoutes = tourIds.map((tourId) => `/tours/${tourId}`)
-  const serviceRoutes = serviceIds.map((serviceId) => `/services/${serviceId}`)
+  const tourRoutes = data.tours.map((tour) => `/tours/${tour.id}`)
+  const serviceRoutes = data.services.map((service) => `/services/${service.id}`)
   const allRoutes = [...new Set([...staticRoutes, ...tourRoutes, ...serviceRoutes])]
   const sitemapXml = generateSitemapXml(siteUrl, allRoutes)
   const imagePaths = collectImagePaths(publicImagesDir, 'images')
   const imageEntries = [
     { pagePath: '/', imagePath: '/logo.png' },
+    { pagePath: '/', imagePath: '/images/mountain-road-panorama-0046.jpg' },
+    { pagePath: '/tours', imagePath: '/images/safari-vehicle-in-grassland-0093.jpg' },
+    { pagePath: '/services', imagePath: '/images/luxury-lodge-aerial-view-0094.jpg' },
+    { pagePath: '/destinations', imagePath: '/images/lake-islands-overlook-0031.jpg' },
+    { pagePath: '/about', imagePath: '/images/sunset-over-mountain-ridges-0081.jpg' },
+    { pagePath: '/gallery', imagePath: '/images/gorilla-family-in-forest-0075.jpg' },
+    { pagePath: '/experiences', imagePath: '/images/group-watching-sunset-0023.jpg' },
+    { pagePath: '/contact-us', imagePath: '/images/group-seated-at-forest-viewpoint-0058.jpg' },
+    { pagePath: '/site-map', imagePath: '/images/mountain-road-panorama-0046.jpg' },
+    ...data.tours.flatMap((tour) => {
+      const imagePath = normalizeImagePath(tour.image)
+      return imagePath
+        ? [
+            { pagePath: '/tours', imagePath },
+            { pagePath: `/tours/${tour.id}`, imagePath },
+          ]
+        : []
+    }),
+    ...data.services.flatMap((service) => {
+      const imagePath = normalizeImagePath(service.image)
+      return imagePath
+        ? [
+            { pagePath: '/services', imagePath },
+            { pagePath: `/services/${service.id}`, imagePath },
+          ]
+        : []
+    }),
+    ...data.destinations.flatMap((destination) => {
+      const imagePath = normalizeImagePath(destination.image)
+      return imagePath ? [{ pagePath: '/destinations', imagePath }] : []
+    }),
     ...imagePaths.map((imagePath) => ({
       pagePath: '/gallery',
       imagePath,

@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
-import { PageHero } from '../components/PageHero'
 import { SectionHeading } from '../components/SectionHeading'
 import { TourCard } from '../components/TourCard'
 import { ExperienceCallout } from '../components/ExperienceCallout'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { tours } from '../data/siteContent'
 import { getTourDetail } from '../data/tourDetails'
 import {
@@ -447,31 +445,6 @@ export function ToursPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t('tours.heroEyebrow')}
-        title={t('tours.heroTitle')}
-        description={t('tours.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('tours.heroActionStartPlanning'), to: `/tours#${CUSTOM_TOUR_FORM_ANCHOR}` },
-          { label: t('tours.heroActionViewServices'), to: '/services', variant: 'secondary' },
-        ]}
-        highlights={[
-          t('tours.heroHighlight1'),
-          t('tours.heroHighlight2'),
-          t('tours.heroHighlight3'),
-        ]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('tours.heroPanelTitle'),
-          points: [
-            t('tours.heroPanelPoint1'),
-            t('tours.heroPanelPoint2'),
-            t('tours.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container">
           <article id={CUSTOM_TOUR_FORM_ANCHOR} className="service-detail-panel custom-tour-panel">

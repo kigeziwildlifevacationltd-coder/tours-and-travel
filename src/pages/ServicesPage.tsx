@@ -1,9 +1,7 @@
-import { PageHero } from '../components/PageHero'
 import { SectionHeading } from '../components/SectionHeading'
 import { ServiceCard } from '../components/ServiceCard'
 import { ExperienceCallout } from '../components/ExperienceCallout'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { services } from '../data/siteContent'
 import {
   GORILLA_TREKKING_KEYWORDS,
@@ -27,7 +25,6 @@ const servicesPageKeywordCluster = buildPageKeywordCluster(
 
 export function ServicesPage() {
   const { t } = useTranslation()
-  const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
 
   usePageSeo({
     title: t('services.heroTitle'),
@@ -61,31 +58,6 @@ export function ServicesPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t('services.heroEyebrow')}
-        title={t('services.heroTitle')}
-        description={t('services.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('services.heroActionRequest'), to: requestTourUrl },
-          { label: t('services.heroActionSeeTours'), to: '/tours', variant: 'secondary' },
-        ]}
-        highlights={[
-          t('services.heroHighlight1'),
-          t('services.heroHighlight2'),
-          t('services.heroHighlight3'),
-        ]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('services.heroPanelTitle'),
-          points: [
-            t('services.heroPanelPoint1'),
-            t('services.heroPanelPoint2'),
-            t('services.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container">
           <SectionHeading

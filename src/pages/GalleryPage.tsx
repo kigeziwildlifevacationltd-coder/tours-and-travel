@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { PageHero } from '../components/PageHero'
 import { SectionHeading } from '../components/SectionHeading'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { useRuntimeTranslatedList } from '../hooks/useRuntimeTranslation'
 import type { TranslationKey } from '../i18n/translations'
 import {
@@ -484,7 +482,6 @@ export function GalleryPage() {
     visibleRuntimeGeneratedItems,
     visibleRuntimeTitleSeeds,
   ])
-  const requestTourUrl = '/tours?openCustomTour=1#custom-tour-request'
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const activeItem = activeIndex !== null ? galleryItems[activeIndex] : null
   const currentModalIndex = activeIndex ?? 0
@@ -585,37 +582,9 @@ export function GalleryPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t('gallery.heroEyebrow')}
-        title={t('gallery.heroTitle')}
-        description={t('gallery.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('gallery.heroActionContact'), to: requestTourUrl },
-          { label: t('gallery.heroActionTours'), to: '/tours', variant: 'secondary' },
-        ]}
-        highlights={[
-          t('gallery.heroHighlight1'),
-          t('gallery.heroHighlight2'),
-          t('gallery.heroHighlight3'),
-        ]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('gallery.heroPanelTitle'),
-          points: [
-            t('gallery.heroPanelPoint1'),
-            t('gallery.heroPanelPoint2'),
-            t('gallery.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container">
-          <SectionHeading
-            title={t('gallery.collectionTitle')}
-            subtitle={t('gallery.collectionSubtitle')}
-          />
+          <SectionHeading title={t('gallery.collectionTitle')} subtitle={t('gallery.collectionSubtitle')} />
 
           <div className="card-grid gallery-grid">
             {visibleGalleryItems.map((item, index) => (

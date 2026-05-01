@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
-import { PageHero } from '../components/PageHero'
+import { SectionHeading } from '../components/SectionHeading'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { usePageSeo } from '../seo/usePageSeo'
 
 export function NotFoundPage() {
@@ -17,41 +16,15 @@ export function NotFoundPage() {
   })
 
   return (
-    <>
-      <PageHero
-        eyebrow={t('notFound.heroEyebrow')}
-        title={t('notFound.heroTitle')}
-        description={t('notFound.heroDescription')}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('notFound.heroActionHome'), to: '/' },
-          { label: t('notFound.heroActionTours'), to: '/tours', variant: 'secondary' },
-        ]}
-        highlights={[
-          t('notFound.heroHighlight1'),
-          t('notFound.heroHighlight2'),
-          t('notFound.heroHighlight3'),
-        ]}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('notFound.heroPanelTitle'),
-          points: [
-            t('notFound.heroPanelPoint1'),
-            t('notFound.heroPanelPoint2'),
-            t('notFound.heroPanelPoint3'),
-          ],
-        }}
-      />
-
-      <section className="section not-found">
-        <div className="container">
-          <h2>{t('notFound.helpTitle')}</h2>
-          <p>{t('notFound.helpDescription')}</p>
-          <Link to={requestTourUrl} className="btn btn-primary">
-            {t('notFound.contactTeam')}
-          </Link>
-        </div>
-      </section>
-    </>
+    <section className="section not-found">
+      <div className="container">
+        <SectionHeading title={t('notFound.heroTitle')} subtitle={t('notFound.heroDescription')} />
+        <h2>{t('notFound.helpTitle')}</h2>
+        <p>{t('notFound.helpDescription')}</p>
+        <Link to={requestTourUrl} className="btn btn-primary">
+          {t('notFound.contactTeam')}
+        </Link>
+      </div>
+    </section>
   )
 }

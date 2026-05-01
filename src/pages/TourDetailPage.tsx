@@ -1,10 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
-import { PageHero } from '../components/PageHero'
+import { SectionHeading } from '../components/SectionHeading'
 import { TourRating } from '../components/TourRating'
 import { ExperienceCallout } from '../components/ExperienceCallout'
 import { TourRouteMap } from '../components/TourRouteMap'
 import { useTranslation } from '../context/useTranslation'
-import { heroBackgroundImages } from '../data/heroImages'
 import { tours } from '../data/siteContent'
 import { getTourDetail } from '../data/tourDetails'
 import { useRuntimeTranslatedList, useRuntimeTranslatedText } from '../hooks/useRuntimeTranslation'
@@ -23,7 +22,6 @@ export function TourDetailPage() {
   const detail = tour ? getTourDetail(tour) : null
   const translatedTourTitle = useRuntimeTranslatedText(tour?.title ?? '')
   const translatedDetailOverview = useRuntimeTranslatedText(detail?.overview ?? '')
-  const translatedHighlights = useRuntimeTranslatedList(detail?.highlights ?? [])
   const translatedItineraryOutline = useRuntimeTranslatedList(detail?.itineraryOutline ?? [])
   const translatedIncludes = useRuntimeTranslatedList(detail?.includes ?? [])
   const translatedPackages = useRuntimeTranslatedList(detail?.packages ?? [])
@@ -127,29 +125,9 @@ export function TourDetailPage() {
   })()
   return (
     <>
-      <PageHero
-        eyebrow={t('tourDetail.heroEyebrow')}
-        title={translatedTourTitle}
-        description={translatedDetailOverview}
-        className="hero-actions-centered hero-actions-bottom"
-        actions={[
-          { label: t('tourDetail.heroActionRequest'), to: prefillCustomTourRequestUrl },
-          { label: t('tourDetail.heroActionAllTours'), to: '/tours', variant: 'secondary' },
-        ]}
-        highlights={translatedHighlights}
-        backgroundImages={heroBackgroundImages}
-        panel={{
-          title: t('tourDetail.heroPanelTitle'),
-          points: [
-            t('tourDetail.heroPanelPoint1'),
-            t('tourDetail.heroPanelPoint2'),
-            t('tourDetail.heroPanelPoint3'),
-          ],
-        }}
-      />
-
       <section className="section">
         <div className="container">
+          <SectionHeading title={translatedTourTitle} subtitle={translatedDetailOverview} />
           <div className="service-detail-layout">
             <article className="service-detail-panel">
               <p className="service-detail-label">{t('tourDetail.dayFlowLabel')}</p>

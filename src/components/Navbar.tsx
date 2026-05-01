@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { destinations, navItems, services, tours } from '../data/siteContent'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useTranslation } from '../context/useTranslation'
@@ -132,6 +132,8 @@ const contactEmails = [BUSINESS_CONTACT_EMAIL, BUSINESS_CONTACT_EMAIL_SECONDARY]
 
 const formatTelLink = (value: string) => `tel:${value.replace(/\s+/g, '')}`
 export function Navbar() {
+  const location = useLocation()
+  const navShellRef = useRef<HTMLDivElement | null>(null)
   const [open, setOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
   const { t } = useTranslation()
@@ -168,6 +170,67 @@ export function Navbar() {
     setOpen(false)
     setExpandedMenu(null)
   }
+
+  useEffect(() => {
+    handleNavClose()
+  }, [location.pathname, location.search, location.hash])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (!open || !window.matchMedia('(max-width: 960px)').matches) {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !open) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleNavClose()
+      }
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target
+
+      if (!(target instanceof Node)) {
+        return
+      }
+
+      if (!navShellRef.current?.contains(target)) {
+        handleNavClose()
+      }
+    }
+
+    const handleResize = () => {
+      if (!window.matchMedia('(max-width: 960px)').matches) {
+        handleNavClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('pointerdown', handlePointerDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [open])
 
   const getDropdownItems = (to: string) => {
     if (to === '/tours') {
@@ -305,7 +368,7 @@ export function Navbar() {
           ) : null}
         </div>
       </div>
-      <div className="container nav-container nav-shell">
+      <div ref={navShellRef} className="container nav-container nav-shell">
         <NavLink
           to={getNavTarget('/')}
           className="brand-mark"

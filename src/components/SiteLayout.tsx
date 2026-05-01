@@ -56,6 +56,7 @@ export function SiteLayout() {
       <Navbar />
       <FloatingWhatsApp />
       <main id="main-content" className="site-main">
+        <span id="page-content" aria-hidden="true" />
         <Outlet />
       </main>
       <Footer />

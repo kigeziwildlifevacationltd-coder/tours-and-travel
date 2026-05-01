@@ -431,7 +431,7 @@ function buildStaticPage(routePath, data) {
             featuredTours.map((tour) => ({
               href: `/tours/${tour.id}`,
               label: tour.title,
-              meta: `${tour.duration} • ${tour.country}`,
+              meta: `${tour.duration} | ${tour.country}`,
               description: tour.summary,
             })),
           ),
@@ -462,7 +462,7 @@ function buildStaticPage(routePath, data) {
           data.tours.map((tour) => ({
             href: `/tours/${tour.id}`,
             label: tour.title,
-            meta: `${tour.duration} • ${tour.country}`,
+            meta: `${tour.duration} | ${tour.country}`,
             description: tour.summary,
           })),
         ),
@@ -503,7 +503,7 @@ function buildStaticPage(routePath, data) {
         renderLinkList(
           'Safari Destinations Featured In Our Tours',
           data.destinations.map((destination) => ({
-            href: '/tours',
+            href: `/destinations#${destination.id}`,
             label: destination.name,
             meta: destination.region,
             description: destination.summary,
@@ -632,7 +632,7 @@ function buildStaticPage(routePath, data) {
           },
           {
             title: 'Phone',
-            body: businessPhones.join(' • '),
+            body: businessPhones.join(' | '),
           },
           {
             title: 'Support Topics',
@@ -678,7 +678,7 @@ function buildStaticPage(routePath, data) {
           data.tours.map((tour) => ({
             href: `/tours/${tour.id}`,
             label: tour.title,
-            meta: `${tour.duration} â€¢ ${tour.country}`,
+            meta: `${tour.duration} | ${tour.country}`,
             description: tour.summary,
           })),
         ),
@@ -749,7 +749,7 @@ function buildDynamicPage(routePath, data) {
           relatedTours.map((item) => ({
             href: `/tours/${item.id}`,
             label: item.title,
-            meta: `${item.duration} • ${item.country}`,
+            meta: `${item.duration} | ${item.country}`,
             description: item.summary,
           })),
         ),
@@ -1130,3 +1130,5 @@ function run() {
 }
 
 run()
+
+
