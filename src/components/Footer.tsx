@@ -329,8 +329,8 @@ export function Footer() {
             {t('footer.copyright')} {year} {t('brand.name')}
           </p>
           <p className="footer-copy">
-            Developed by Atwijuka Kevin.{' '}
-            <a href="mailto:atwijukakevint@gmail.com">atwijukakevint@gmail.com</a>
+            Developed by Leticia Nabunje.{' '}
+            <a href="mailto:leticianabunje@gmail.com">leticianabunje@gmail.com</a>
           </p>
         </div>
       </div>
